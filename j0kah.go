@@ -97,7 +97,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
+func performScan(target, scanType, args string, duration int, proxies []string) (string, string, int) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -123,7 +123,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return "", ""
+		return "", "", 0
 	}
 
 	wg.Wait()
@@ -144,11 +144,10 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 		fmt.Printf("\033[1;31mFailed to save unknown ports: %s\033[0m\n", err)
 	}
 
-	fmt.Println("\n\033[1;33mScan Results:\033[0m")
-	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
-	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
+	// Count the number of results
+	resultCount := len(strings.Split(filteredOutput, "\n"))
 
-	return mainFile, unknownFile
+	return mainFile, unknownFile, resultCount
 }
 
 func filterOutput(output string) string {
@@ -254,7 +253,7 @@ func main() {
 	scanner.Scan()
 	target := scanner.Text()
 
-	fmt.Printf("\nScanning %s... Brace yourself, this is gonna be a wild ride!\n", target)
+	fmt.Printf("\nScanning %s... Hold tight, this is gonna be a wild ride!\n", target)
 	fmt.Print("\nSelect scan type:\n")
 	fmt.Print("  i. SYN-ACK Scan - Because poking the bear is fun\n")
 	fmt.Print("  ii. UDP Scan - Unfiltered and full of chaos\n")
@@ -308,20 +307,21 @@ func main() {
 	resultHandling := scanner.Text()
 
 	fmt.Println("\033[1;33mStarting scan. Hold tight!\033[0m")
+	mainFile, unknownFile, resultCount := performScan(target, scanType, args, duration, proxies)
+
+	fmt.Printf("\033[1;32mScan completed. Found %d results. Because you really needed to know that.\033[0m\n", resultCount)
+
 	if strings.Contains(resultHandling, "1") {
-		mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
 		if mainFile != "" {
 			fmt.Printf("\033[1;32mScan results saved to %s and %s.\033[0m\n", mainFile, unknownFile)
 		}
 	}
 	if strings.Contains(resultHandling, "2") {
-		mainFile, _ := performScan(target, scanType, args, duration, proxies)
 		if mainFile != "" {
 			sendResultsToTelegram(mainFile)
 		}
 	}
 	if strings.Contains(resultHandling, "3") {
-		mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
 		if mainFile != "" {
 			sendResultsToTelegram(mainFile)
 		}
