@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -260,7 +259,7 @@ func sendResultsToTelegram(resultsFile string) {
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token correctly, genius?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you forget to feed it?\033[0m\n", err)
 		return
 	}
 
