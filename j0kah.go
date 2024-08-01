@@ -20,6 +20,7 @@ const (
 	retryDelay     = 2 * time.Second
 	proxyURL       = "https://www.proxy-list.download/api/v1/get?type=https"
 	outputFile     = "proxy.list"
+	testURL        = "http://www.google.com"
 )
 
 func scrapeProxies(url string) ([]string, error) {
@@ -68,6 +69,51 @@ func saveProxies(filename string, proxies []string) error {
 	}
 
 	return nil
+}
+
+func checkProxy(proxy string) bool {
+	proxyURL := "http://" + proxy
+	proxyFunc := http.ProxyURL(&url.URL{Scheme: "http", Host: proxyURL})
+	transport := &http.Transport{Proxy: proxyFunc}
+	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
+
+	resp, err := client.Get(testURL)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to connect using proxy %s: %s\033[0m\n", proxy, err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("\033[1;31mProxy %s returned status code %d\033[0m\n", proxy, resp.StatusCode)
+		return false
+	}
+
+	return true
+}
+
+func filterWorkingProxies(proxies []string) []string {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var workingProxies []string
+
+	sem := make(chan struct{}, maxConcurrency)
+	for _, proxy := range proxies {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(proxy string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if checkProxy(proxy) {
+				mu.Lock()
+				workingProxies = append(workingProxies, proxy)
+				mu.Unlock()
+			}
+		}(proxy)
+	}
+
+	wg.Wait()
+	return workingProxies
 }
 
 func printHeader() {
@@ -215,21 +261,15 @@ func sendResultsToTelegram(resultsFile string) {
 		return
 	}
 
-	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
+	chatIDInt64, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
+		fmt.Printf("\033[1;31mInvalid chat ID: %s. Can’t send messages to a black hole, you know.\033[0m\n", chatID)
 		return
 	}
 
-	msg := tgbotapi.NewMessage(chatIDInt, "Scan results are attached.")
-	fileAttachment := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
-	if _, err := bot.Send(msg); err != nil {
-		fmt.Printf("\033[1;31mFailed to send message: %s\033[0m\n", err)
-		return
-	}
-	if _, err := bot.Send(fileAttachment); err != nil {
-		fmt.Printf("\033[1;31mFailed to send file: %s\033[0m\n", err)
-		return
+	message := tgbotapi.NewMessage(chatIDInt64, fmt.Sprintf("Scan results saved to %s", resultsFile))
+	if _, err := bot.Send(message); err != nil {
+		fmt.Printf("\033[1;31mFailed to send Telegram message: %s. Guess the bots are revolting.\033[0m\n", err)
 	}
 }
 
@@ -296,13 +336,18 @@ func main() {
 		return
 	}
 
-	fmt.Printf("\033[1;33mUsing %d proxies\033[0m\n", len(proxies))
-	
-	// Main target input logic should be here
+	workingProxies := filterWorkingProxies(proxies)
+	if len(workingProxies) == 0 {
+		fmt.Println("\033[1;31mNo working proxies found. Exiting.\033[0m")
+		return
+	}
 
-	// Example of running a scan
+	fmt.Printf("\033[1;33mUsing %d proxies\033[0m\n", len(workingProxies))
+
+	// Main target input logic should be here
 	target := "127.0.0.1" // Replace with actual target
-	resultsFile, results := performScan(target, scanType, args, duration, proxies)
+
+	resultsFile, results := performScan(target, scanType, args, duration, workingProxies)
 	if results != "" {
 		fmt.Printf("\033[1;32mScan completed. Results saved to %s\033[0m\n", resultsFile)
 	}
