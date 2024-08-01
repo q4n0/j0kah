@@ -92,9 +92,9 @@ func printFooter() {
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m\r", i*100/duration)
+		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations—you’re officially a glutton for punishment.\033[0m\r", i*100/duration)
 	}
-	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
+	fmt.Println("\033[1;32mYou made it through the wait. Bravo! You’re now a certified saint. Or perhaps just extremely patient.\033[0m")
 }
 
 func performScan(target, scanType, args string, duration int, proxies []string) string {
@@ -234,49 +234,32 @@ func main() {
 	fmt.Print("\nSelect scan type:\n")
 	fmt.Print("  i. SYN-ACK Scan - Because poking the bear is fun\n")
 	fmt.Print("  ii. UDP Scan - Unfiltered and full of chaos\n")
-	fmt.Print("  iii. AnonScan - Sneaky like a thief in the night\n")
-	fmt.Print("  iv. Regular Scan - The vanilla flavor for the boring folks\n")
-	fmt.Print("  v. OS Detection - Guessing what OS they're running, like a pro\n")
-	fmt.Print("  vi. Multiple IP inputs - Because one target is never enough\n")
-	fmt.Print("  vii. Ping Scan - Hello? Is anybody home?\n")
-	fmt.Print("  viii. Comprehensive Scan - The whole shebang, go big or go home\n> ")
+	fmt.Print("  iii. Version Scan - Because who doesn’t love details?\n")
+	fmt.Print("  iv. OS Detection - Or should we say, ‘Guessing game’?\n")
+	fmt.Print("> ")
+
 	scanner.Scan()
-	scanType := scanner.Text()
+	scanType := strings.TrimSpace(scanner.Text())
 
-	scanOptions := map[string]string{
-		"i":    "-sS",
-		"ii":   "-sU",
-		"iii":  "-sS -Pn",
-		"iv":   "-sT",
-		"v":    "-O",
-		"vi":   "-iL",
-		"vii":  "-sn",
-		"viii": "-A",
-	}
+	fmt.Print("\nEnter additional arguments (or just hit Enter to skip):\n> ")
+	scanner.Scan()
+	args := scanner.Text()
 
-	args, ok := scanOptions[scanType]
-	if !ok {
-		fmt.Println("\033[1;31mInvalid scan type selected. Try again if you’re feeling lucky!\033[0m")
-		return
-	}
-
-	fmt.Print("Enter duration for progress indicator (seconds): \n> ")
+	fmt.Print("\nEnter duration for progress indicator (seconds): \n> ")
 	scanner.Scan()
 	duration := atoi(scanner.Text())
 
-	fmt.Print("Do you want to use proxies? (y/n): \n> ")
-	scanner.Scan()
-	useProxies := strings.ToLower(scanner.Text()) == "y"
+	fmt.Println("\nFetching proxies...")
+	proxies, err := scrapeProxies(proxyURL)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to fetch proxies: %s\033[0m\n", err)
+		return
+	}
 
-	var proxies []string
-	if useProxies {
-		fmt.Println("\033[1;33mFetching proxies... or not, depending on how the internet feels today.\033[0m")
-		proxies, _ = scrapeProxies(proxyURL)
-		if err := saveProxies(outputFile, proxies); err != nil {
-			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
-		} else {
-			fmt.Printf("\033[1;32mProxies saved to %s. Because anonymity is a thing.\033[0m\n", outputFile)
-		}
+	if err := saveProxies(outputFile, proxies); err != nil {
+		fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
+	} else {
+		fmt.Printf("\033[1;32mProxies saved to %s\033[0m\n", outputFile)
 	}
 
 	fmt.Print("How would you like to handle results? (1. Save to file, 2. Send to Telegram, 3. Both): \n> ")
