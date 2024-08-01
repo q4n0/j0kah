@@ -22,6 +22,16 @@ const (
 	outputFile     = "proxy.list"
 )
 
+// Define colors
+const (
+	Red     = "\033[1;31m"
+	Green   = "\033[1;32m"
+	Yellow  = "\033[1;33m"
+	Blue    = "\033[1;34m"
+	Cyan    = "\033[1;36m"
+	Reset   = "\033[0m"
+)
+
 func scrapeProxies(url string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -71,30 +81,30 @@ func saveProxies(filename string, proxies []string) error {
 }
 
 func printHeader() {
-	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
-	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;33mSelect the type of scan to perform, or just screw around:\033[0m")
+	fmt.Println(Blue + "===================================" + Reset)
+	fmt.Println(Blue + "       Welcome to j0kah Recon Tool" + Reset)
+	fmt.Println(Blue + "===================================" + Reset)
+	fmt.Println(Yellow + "Select the type of scan to perform, or just screw around:" + Reset)
 	fmt.Println()
 }
 
 func printFooter() {
 	fmt.Println()
-	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;32mCreated by bo0urn3\033[0m")
-	fmt.Println("\033[1;32mGitHub: \033[1;36mhttps://github.com/q4n0\033[0m")
-	fmt.Println("\033[1;32mInstagram: \033[1;36mhttps://www.instagram.com/onlybyhive\033[0m")
-	fmt.Println("\033[1;32mEmail: \033[1;36mb0urn3@proton.me\033[0m")
-	fmt.Println("\033[1;34m===================================\033[0m")
+	fmt.Println(Blue + "===================================" + Reset)
+	fmt.Println(Green + "Created by bo0urn3" + Reset)
+	fmt.Println(Green + "GitHub: " + Cyan + "https://github.com/q4n0" + Reset)
+	fmt.Println(Green + "Instagram: " + Cyan + "https://www.instagram.com/onlybyhive" + Reset)
+	fmt.Println(Green + "Email: " + Cyan + "b0urn3@proton.me" + Reset)
+	fmt.Println(Blue + "===================================" + Reset)
 	fmt.Println()
 }
 
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m\r", i*100/duration)
+		fmt.Printf(Green+"Progress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist."+Reset+"\r", i*100/duration)
 	}
-	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
+	fmt.Println(Green + "You made it through the wait. Bravo, you’re now a certified saint. Or just really bored." + Reset)
 }
 
 func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
@@ -117,12 +127,12 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 		if err == nil {
 			break
 		}
-		fmt.Printf("\033[1;31mScan failed: %s. Retry? Of course, because who doesn't love a good, endless loop?\033[0m\n", err)
+		fmt.Printf(Red+"Scan failed: %s. Retry? Of course, because who doesn't love a good, endless loop."+Reset+"\n", err)
 		time.Sleep(retryDelay)
 	}
 
 	if err != nil {
-		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
+		fmt.Printf(Red+"Final scan error: %s\nError output: %s"+Reset+"\n", err, string(output))
 		return "", ""
 	}
 
@@ -134,7 +144,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	err = saveResults(mainFile, filteredOutput)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
+		fmt.Printf(Red+"Failed to save scan results: %s"+Reset+"\n", err)
 	}
 
 	return mainFile, filteredOutput
@@ -173,7 +183,7 @@ func saveResults(filename, content string) error {
 func atoi(str string) int {
 	val, err := strconv.Atoi(str)
 	if err != nil {
-		fmt.Printf("\033[1;31mError converting string to int: %s\033[0m\n", err)
+		fmt.Printf(Red+"Error converting string to int: %s"+Reset+"\n", err)
 		return 0
 	}
 	return val
@@ -181,14 +191,14 @@ func atoi(str string) int {
 
 func sendResultsToTelegram(resultsFile string) {
 	if fileInfo, err := os.Stat(resultsFile); err != nil || fileInfo.Size() == 0 {
-		fmt.Printf("\033[1;31mFile %s is empty or does not exist. Not sending to Telegram.\033[0m\n", resultsFile)
+		fmt.Printf(Red+"File %s is empty or does not exist. Not sending to Telegram."+Reset+"\n", resultsFile)
 		return
 	}
 
 	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to open config file: %s. Maybe try not screwing it up next time?\033[0m\n", err)
+		fmt.Printf(Red+"Failed to open config file: %s. Maybe try not screwing it up next time?"+Reset+"\n", err)
 		return
 	}
 	defer file.Close()
@@ -205,26 +215,26 @@ func sendResultsToTelegram(resultsFile string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Printf("\033[1;31mError reading config file: %s. Was it in the shredder?\033[0m\n", err)
+		fmt.Printf(Red+"Error reading config file: %s. Was it in the shredder?"+Reset+"\n", err)
 		return
 	}
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?\033[0m\n", err)
+		fmt.Printf(Red+"Failed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?"+Reset+"\n", err)
 		return
 	}
 
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
+		fmt.Printf(Red+"Invalid chat ID: %s. Did you forget how to count?"+Reset+"\n", err)
 		return
 	}
 
 	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
 	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send file to Telegram: %s. You sure the chat ID isn’t a black hole?\033[0m\n", err)
+		fmt.Printf(Red+"Failed to send file to Telegram: %s. You sure the chat ID isn’t a black hole?"+Reset+"\n", err)
 	}
 }
 
@@ -257,12 +267,12 @@ func main() {
 		fmt.Println("Fetching proxies... or not, depending on how the internet feels today.")
 		proxies, err := scrapeProxies(proxyURL)
 		if err != nil {
-			fmt.Printf("\033[1;31mFailed to fetch proxies: %s\033[0m\n", err)
+			fmt.Printf(Red+"Failed to fetch proxies: %s"+Reset+"\n", err)
 			return
 		}
 		err = saveProxies(outputFile, proxies)
 		if err != nil {
-			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
+			fmt.Printf(Red+"Failed to save proxies: %s"+Reset+"\n", err)
 			return
 		}
 		fmt.Printf("Proxies saved to %s. Because anonymity is a thing.\n", outputFile)
@@ -301,7 +311,7 @@ func main() {
 		scanType = "Comprehensive"
 		args = "-A"
 	default:
-		fmt.Println("Invalid option selected.")
+		fmt.Println(Red + "Invalid option selected." + Reset)
 		return
 	}
 
@@ -320,9 +330,9 @@ func main() {
 
 	switch handleOption {
 	case "1":
-		fmt.Println("\n\033[1;33mScan Results:\033[0m")
-		fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
-		fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
+		fmt.Println("\n" + Yellow + "Scan Results:" + Reset)
+		fmt.Printf(Yellow + "Target:" + Reset + " %s\n", target)
+		fmt.Printf(Yellow + "Filtered Output:" + Reset + "\n%s\n", filteredOutput)
 	case "2":
 		fmt.Print("Would you like to save the results to a file? (yes/no) ")
 		var saveToFile string
@@ -338,7 +348,7 @@ func main() {
 			sendResultsToTelegram(resultsFile)
 		}
 	default:
-		fmt.Println("Invalid option selected.")
+		fmt.Println(Red + "Invalid option selected." + Reset)
 	}
 
 	printFooter()
