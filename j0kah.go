@@ -97,7 +97,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
+func performScan(target, scanType, args string, duration int, proxies []string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -123,7 +123,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return "", ""
+		return ""
 	}
 
 	wg.Wait()
