@@ -1,91 +1,113 @@
-# j0kah Recon Tool
+j0kah Recon Tool
 
-The j0kah Recon Tool is a network scanning utility designed to perform various types of scans with optional proxy support and Telegram integration for reporting results.
+Welcome to the j0kah Recon Tool! This tool is designed for network reconnaissance and scanning. Follow these instructions to install and use the tool effectively.
+Prerequisites USE RESPONSIBLYI WONT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOU ARE ON YOUR OWN!!!
 
-## Prerequisites
+    Go Programming Language:
+    Ensure you have Go installed. If not, download and install it from the official Go website.
 
-Before using the j0kah Recon Tool, ensure the following:
+    Git:
+    You need Git to clone the repository. Install it from the official Git website.
 
-- **Go Language**: Make sure Go is installed. You can download it from [golang.org](https://golang.org/dl/).
-- **Nmap**: Install Nmap for network scanning. Download it from [nmap.org](https://nmap.org/download.html).
-- **Telegram Bot Token**: Create a Telegram bot and obtain the token from [BotFather](https://core.telegram.org/bots#botfather).
+Installation
 
-## Setup
+    Clone the Repository:
 
-1. **Clone the Repository:**
-
-   ```bash
-   git clone https://github.com/q4n0/j0kah
-   cd j0kah
-
-    Initialize Go Modules:
-
-    Run the following command to initialize the Go module and download dependencies:
+    Clone the repository to your local machine:
 
     bash
+
+git clone https://github.com/q4n0/j0kah.git
+cd j0kah
+
+Install Go Modules:
+
+Install the required Go modules by running:
+
+bash
 
 go mod tidy
 
 Build the Project:
 
-Build the Go application:
+Build the executable from the source code:
 
 bash
 
 go build -o j0kah
 
-Create Configuration File:
+Verify the Installation:
 
-Create a config.ini file in the project directory with the following content:
+Ensure the executable was built successfully. You should see a file named j0kah in your directory:
 
-ini
+bash
 
-    token=put token here
-    chat_id=put chat id here
-
-    Replace put token here and put chat id here with your actual Telegram bot token and chat ID.
+    ls -l j0kah
 
 Usage
 
-    Run j0kah Recon Tool:
+To run the j0kah Recon Tool, use the following command:
 
-    Execute the tool:
+bash
 
-    bash
+./j0kah
 
-    ./j0kah
+Interactive Guide
 
-    Follow the Prompts to:
-        Enter the IP/domain to scan.
-        Choose the scan type (e.g., SYN-ACK Scan, UDP Scan).
-        Decide whether to fetch and use proxies.
-        Enter the scan duration and other options.
-        Choose how to handle results (save to file, send via Telegram, or both).
+Upon running the tool, you'll be prompted to:
 
-Proxy Management
+    Enter IP/Domain to Scan:
+    Provide the target IP address or domain you want to scan.
 
-To use proxies for scanning:
+    Select Scan Type:
+    Choose from the following scan types:
+        i: SYN-ACK Scan
+        ii: UDP Scan
+        iii: AnonScan
+        iv: Regular Scan
+        v: OS Detection
+        vi: Multiple IP inputs
+        vii: Ping Scan
+        viii: Comprehensive Scan
 
-    Proxies are Integrated: The tool automatically fetches proxies from the Proxy List API and saves them to proxy.list if you choose to use them.
-    Proxy Configuration: If proxies are available, they will be used in the scan. The proxy list is fetched and saved automatically, and the proxy configuration is handled within the tool.
+    Enter Duration for Progress Indicator:
+    Specify how long (in seconds) the progress indicator should run.
 
-Telegram Integration
+    Use Proxies:
+    Decide whether to use proxies. If yes, proxies will be fetched and saved to proxy.list.
 
-To receive scan results via Telegram:
+    Handle Results:
+    Choose how to handle the results:
+        1: Save to file
+        2: Send to Telegram
+        3: Both save to file and send to Telegram
 
-    Create a Telegram Bot:
-        Use BotFather to create a new bot and obtain the token.
+Example
 
-    Configure the Bot:
-        Save your bot token and chat ID in the config.ini file as described in the Setup section.
+bash
 
-    Send Results:
-        During tool usage, choose to send results to Telegram.
+./j0kah
 
-Troubleshooting
+    Enter IP/domain: 192.168.1.1
+    Select scan type: ii (UDP Scan)
+    Enter duration: 30
+    Use proxies: y
+    Handle results: 3 (Both)
 
-    Error: unexpected status code: 404: This indicates an issue with fetching proxies. Ensure the proxy URL is correct and reachable.
-    Failed to create file: Check file permissions in the directory where you're trying to save files.
-    Telegram errors: Verify the config.ini file for the correct token and chat ID. Ensure the bot has permission to send messages to the chat ID.
+Proxies
 
-If you encounter any issues, feel free to open an issue on the GitHub repository for assistance.
+If you choose to use proxies, the tool will fetch them from this API and save them to proxy.list.
+Sending Results to Telegram
+
+To send results to Telegram, ensure you have a config.ini file with the following format:
+
+makefile
+
+token=YOUR_TELEGRAM_BOT_TOKEN
+chat_id=YOUR_CHAT_ID
+
+Contributing
+
+If you wish to contribute to the project, or any questions or issues, please contact the maintainer at b0urn3@proton.me.
+
+This project is provided as is USE RESPONSIBLYI WONT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YPUR OWN!!! 
