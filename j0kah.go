@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -257,7 +258,7 @@ func sendResultsToTelegram(resultsFile string) {
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token correctly, genius?\033[0m\n", err)
 		return
 	}
 
@@ -271,6 +272,13 @@ func sendResultsToTelegram(resultsFile string) {
 	if _, err := bot.Send(message); err != nil {
 		fmt.Printf("\033[1;31mFailed to send Telegram message: %s. Guess the bots are revolting.\033[0m\n", err)
 	}
+}
+
+func getTarget() string {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter the target URL or IP: ")
+	target, _ := reader.ReadString('\n')
+	return strings.TrimSpace(target)
 }
 
 func main() {
@@ -345,7 +353,7 @@ func main() {
 	fmt.Printf("\033[1;33mUsing %d proxies\033[0m\n", len(workingProxies))
 
 	// Main target input logic should be here
-	target := "127.0.0.1" // Replace with actual target
+	target := getTarget() // Replace with actual target retrieval function
 
 	resultsFile, results := performScan(target, scanType, args, duration, workingProxies)
 	if results != "" {
