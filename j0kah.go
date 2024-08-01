@@ -97,7 +97,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) string {
+func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -123,7 +123,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return ""
+		return "", ""
 	}
 
 	wg.Wait()
@@ -137,11 +137,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
 	}
 
-	fmt.Println("\n\033[1;33mScan Results:\033[0m")
-	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
-	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
-
-	return mainFile
+	return mainFile, filteredOutput
 }
 
 func filterOutput(output string) string {
@@ -310,16 +306,40 @@ func main() {
 	}
 
 	fmt.Println("Scan in progress...")
-	mainFile := performScan(target, scanType, args, duration, proxies)
-	if mainFile != "" {
-		fmt.Print("Scan completed. Found results. Because you really needed to know that.\n")
+	resultsFile, filteredOutput := performScan(target, scanType, args, duration, proxies)
+
+	fmt.Print("Scan completed. Found results. Because you really needed to know that.\n")
+	fmt.Print("How do you want to handle the results?\n")
+	fmt.Println("1. Print to console")
+	fmt.Println("2. Save to file")
+	fmt.Println("3. Send to Telegram")
+	fmt.Print("> ")
+
+	var handleOption string
+	fmt.Scanln(&handleOption)
+
+	switch handleOption {
+	case "1":
+		fmt.Println("\n\033[1;33mScan Results:\033[0m")
+		fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
+		fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
+	case "2":
+		fmt.Print("Would you like to save the results to a file? (yes/no) ")
+		var saveToFile string
+		fmt.Scanln(&saveToFile)
+		if saveToFile == "yes" {
+			fmt.Printf("Results saved to %s.\n", resultsFile)
+		}
+	case "3":
 		fmt.Print("Would you like to send the results to Telegram? (yes/no) ")
 		var sendToTelegram string
 		fmt.Scanln(&sendToTelegram)
-
 		if sendToTelegram == "yes" {
-			sendResultsToTelegram(mainFile)
+			sendResultsToTelegram(resultsFile)
 		}
+	default:
+		fmt.Println("Invalid option selected.")
 	}
+
 	printFooter()
 }
