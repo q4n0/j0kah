@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -19,37 +18,9 @@ const (
 	maxConcurrency = 80
 	maxRetries     = 3
 	retryDelay     = 2 * time.Second
-	proxyURL       = "https://www.proxy-list.download/api/v1/get?type=https"
 	outputFile     = "proxy.list"
 	testURL        = "http://www.google.com"
 )
-
-func scrapeProxies(url string) ([]string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get proxies: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
-	var proxies []string
-	for scanner.Scan() {
-		proxy := strings.TrimSpace(scanner.Text())
-		if strings.Contains(proxy, ":") {
-			proxies = append(proxies, proxy)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	return proxies, nil
-}
 
 func saveProxies(filename string, proxies []string) error {
 	file, err := os.Create(filename)
@@ -70,51 +41,6 @@ func saveProxies(filename string, proxies []string) error {
 	}
 
 	return nil
-}
-
-func checkProxy(proxy string) bool {
-	proxyURL := "http://" + proxy
-	proxyFunc := http.ProxyURL(&url.URL{Scheme: "http", Host: proxyURL})
-	transport := &http.Transport{Proxy: proxyFunc}
-	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
-
-	resp, err := client.Get(testURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to connect using proxy %s: %s\033[0m\n", proxy, err)
-		return false
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("\033[1;31mProxy %s returned status code %d\033[0m\n", proxy, resp.StatusCode)
-		return false
-	}
-
-	return true
-}
-
-func filterWorkingProxies(proxies []string) []string {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var workingProxies []string
-
-	sem := make(chan struct{}, maxConcurrency)
-	for _, proxy := range proxies {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(proxy string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			if checkProxy(proxy) {
-				mu.Lock()
-				workingProxies = append(workingProxies, proxy)
-				mu.Unlock()
-			}
-		}(proxy)
-	}
-
-	wg.Wait()
-	return workingProxies
 }
 
 func printHeader() {
@@ -144,7 +70,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
+func performScan(target, scanType, args string, duration int) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -156,9 +82,6 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 	var err error
 	for i := 0; i < maxRetries; i++ {
 		cmd := exec.Command("nmap", append(strings.Split(args, " "), target)...)
-		if len(proxies) > 0 {
-			cmd.Env = append(os.Environ(), "http_proxy=http://"+proxies[0])
-		}
 		output, err = cmd.CombinedOutput()
 
 		if err == nil {
@@ -324,44 +247,39 @@ func main() {
 	case "vi":
 		scanType = "Multiple IP inputs"
 		args = "-iL"
-		duration = 60
+		duration = 45
 	case "vii":
-		scanType = "Ping"
-		args = "-sP"
-		duration = 30
+		scanType = "Ping Scan"
+		args = "-sn"
+		duration = 10
 	case "viii":
 		scanType = "Comprehensive"
-		args = "-sS -sU -O -A"
+		args = "-sS -sU -O -A -T4"
 		duration = 240
 	default:
-		fmt.Println("\033[1;31mInvalid choice. Please select a valid scan type.\033[0m")
+		fmt.Println("\033[1;31mInvalid choice. Please follow the script, it's not that hard.\033[0m")
 		return
 	}
 
-	proxies, err := scrapeProxies(proxyURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to scrape proxies: %s\033[0m\n", err)
+	target := getTarget()
+
+	mainFile, filteredOutput := performScan(target, scanType, args, duration)
+	if mainFile == "" {
 		return
 	}
 
-	workingProxies := filterWorkingProxies(proxies)
-	if len(workingProxies) == 0 {
-		fmt.Println("\033[1;31mNo working proxies found. Exiting.\033[0m")
-		return
+	fmt.Println("\033[1;32mScan results saved to:", mainFile, "\033[0m")
+
+	fmt.Print("Would you like to send the results to Telegram? (yes/no): ")
+	sendToTelegram, _ := reader.ReadString('\n')
+	sendToTelegram = strings.TrimSpace(sendToTelegram)
+
+	if strings.ToLower(sendToTelegram) == "yes" {
+		sendResultsToTelegram(mainFile)
+	} else {
+		fmt.Println("\033[1;33mAlright, results not sent to Telegram. Your secrets are safe. For now.\033[0m")
 	}
-
-	fmt.Printf("\033[1;33mUsing %d proxies\033[0m\n", len(workingProxies))
-
-	// Main target input logic should be here
-	target := getTarget() // Replace with actual target retrieval function
-
-	resultsFile, results := performScan(target, scanType, args, duration, workingProxies)
-	if results != "" {
-		fmt.Printf("\033[1;32mScan completed. Results saved to %s\033[0m\n", resultsFile)
-	}
-
-	// Send results to Telegram if configured
-	sendResultsToTelegram(resultsFile)
 
 	printFooter()
 }
+
