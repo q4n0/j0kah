@@ -129,26 +129,19 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 	wg.Wait()
 
 	filteredOutput := filterOutput(string(output))
-	unknownPorts := filterUnknownPorts(string(output))
 
 	mainFile := "scan_results.txt"
-	unknownFile := "unknown_ports.txt"
 
 	err = saveResults(mainFile, filteredOutput)
 	if err != nil {
 		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
 	}
 
-	err = saveResults(unknownFile, unknownPorts)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save unknown ports: %s\033[0m\n", err)
-	}
-
 	fmt.Println("\n\033[1;33mScan Results:\033[0m")
 	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
 	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
 
-	return mainFile, unknownFile
+	return mainFile
 }
 
 func filterOutput(output string) string {
@@ -160,17 +153,6 @@ func filterOutput(output string) string {
 		}
 	}
 	return strings.Join(filteredLines, "\n")
-}
-
-func filterUnknownPorts(output string) string {
-	lines := strings.Split(output, "\n")
-	var unknownPorts []string
-	for _, line := range lines {
-		if !strings.Contains(line, "/tcp") && !strings.Contains(line, "/udp") {
-			unknownPorts = append(unknownPorts, line)
-		}
-	}
-	return strings.Join(unknownPorts, "\n")
 }
 
 func saveResults(filename, content string) error {
@@ -328,7 +310,7 @@ func main() {
 	}
 
 	fmt.Println("Scan in progress...")
-	mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+	mainFile := performScan(target, scanType, args, duration, proxies)
 	if mainFile != "" {
 		fmt.Print("Scan completed. Found results. Because you really needed to know that.\n")
 		fmt.Print("Would you like to send the results to Telegram? (yes/no) ")
