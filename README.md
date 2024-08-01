@@ -20,41 +20,32 @@ Installation
     bash
 
 git clone https://github.com/q4n0/j0kah.git
+
 cd j0kah
 
-Install Go Modules:
-
-Install the required Go modules by running:
-
-bash
+    Install Go Modules, Install the required Go modules by running:
 
 go mod tidy
 
-Build the Project:
-
-Build the executable from the source code:
-
-bash
+    Build the Project, Build the executable from the source code:
 
 go build -o j0kah
 
-Verify the Installation:
+    Verify the Installation:
 
-Ensure the executable was built successfully. You should see a file named j0kah in your directory:
+    Ensure the executable was built successfully. You should see a file named j0kah in your directory:
 
-bash
 
-    ls -l j0kah
 
-Usage
+ls -l j0kah
 
-To run the j0kah Recon Tool, use the following command:
+    Usage
 
-bash
+    To run the j0kah Recon Tool, use the following command:
+    For Linux use:
 
-./j0kah
+sudo ./j0kah  
 
-Interactive Guide
 
 Upon running the tool, you'll be prompted to:
 
@@ -86,9 +77,9 @@ Upon running the tool, you'll be prompted to:
 
 Example
 
-bash
 
-./j0kah
+
+sudo ./j0kah
 
     Enter IP/domain: 192.168.1.1
     Select scan type: ii (UDP Scan)
@@ -107,6 +98,13 @@ makefile
 
 token=YOUR_TELEGRAM_BOT_TOKEN
 chat_id=YOUR_CHAT_ID
+Where as youll change the BOT TOKEN with yours and CHAT ID for your bot read here for that: 
+
+TO GET TOKEN READ:
+https://medium.com/geekculture/generate-telegram-token-for-bot-api-d26faf9bf064
+
+To get TELEGRAM CHAT ID READ:
+https://medium.com/@cyri113/telegram-bot-getting-a-chat-id-5a365229c6ec
 
 Contributing
 
