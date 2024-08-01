@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -45,16 +44,18 @@ func saveProxies(filename string, proxies []string) error {
 
 func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
+	fmt.Println("\033[1;34m       You merely adopted the scans.\033[0m")
+	fmt.Println("\033[1;34m       I was born in it, molded by it.\033[0m")
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;33mSelect the type of scan to perform, or just screw around:\033[0m")
+	fmt.Println("\033[1;33mWelcome to the j0kah Recon Tool, the only tool worthy of your time.\033[0m")
 	fmt.Println()
 }
 
 func printFooter() {
 	fmt.Println()
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;32mCreated by bo0urn3\033[0m")
+	fmt.Println("\033[1;32mWhen the scan is complete, you have my permission to gloat.\033[0m")
+	fmt.Println("\033[1;32mCreated by bo0urn3, a master of the craft.\033[0m")
 	fmt.Println("\033[1;32mGitHub: \033[1;36mhttps://github.com/q4n0\033[0m")
 	fmt.Println("\033[1;32mInstagram: \033[1;36mhttps://www.instagram.com/onlybyhive\033[0m")
 	fmt.Println("\033[1;32mEmail: \033[1;36mb0urn3@proton.me\033[0m")
@@ -70,7 +71,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int) (string, string) {
+func performScan(target, scanType, args string, duration int) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -93,7 +94,7 @@ func performScan(target, scanType, args string, duration int) (string, string) {
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return "", ""
+		return ""
 	}
 
 	wg.Wait()
@@ -107,7 +108,7 @@ func performScan(target, scanType, args string, duration int) (string, string) {
 		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
 	}
 
-	return mainFile, filteredOutput
+	return mainFile
 }
 
 func filterOutput(output string) string {
@@ -234,20 +235,20 @@ func main() {
 		duration = 120
 	case "iii":
 		scanType = "AnonScan"
-		args = "-sS -sU -O"
+		args = "-sS -sU -O -A"
 		duration = 180
 	case "iv":
 		scanType = "Regular"
-		args = "-sT"
-		duration = 30
+		args = "-A"
+		duration = 60
 	case "v":
 		scanType = "OS Detection"
 		args = "-O"
 		duration = 90
 	case "vi":
 		scanType = "Multiple IP inputs"
-		args = "-iL"
-		duration = 45
+		args = "-sS -sU"
+		duration = 120
 	case "vii":
 		scanType = "Ping Scan"
 		args = "-sn"
@@ -263,7 +264,7 @@ func main() {
 
 	target := getTarget()
 
-	mainFile, filteredOutput := performScan(target, scanType, args, duration)
+	mainFile := performScan(target, scanType, args, duration)
 	if mainFile == "" {
 		return
 	}
@@ -282,4 +283,3 @@ func main() {
 
 	printFooter()
 }
-
