@@ -20,6 +20,9 @@ const (
 	retryDelay     = 2 * time.Second
 	proxyURL       = "https://www.proxy-list.download/api/v1/get?type=https"
 	outputFile     = "proxy.list"
+	defaultScanDuration = 30 // Default duration for scan
+	defaultScanType = "SYN" // Default scan type
+	defaultArgs = "-T4 -A"  // Default arguments for scan
 )
 
 func scrapeProxies(url string) ([]string, error) {
@@ -136,12 +139,12 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	err = saveResults(mainFile, filteredOutput)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to save scan results: %s. Well, that’s just perfect, isn’t it?\033[0m\n", err)
 	}
 
 	err = saveResults(unknownFile, unknownPorts)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save unknown ports: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to save unknown ports: %s. Maybe try not to mess things up next time?\033[0m\n", err)
 	}
 
 	fmt.Println("\n\033[1;33mScan Results:\033[0m")
@@ -195,7 +198,7 @@ func saveResults(filename, content string) error {
 func atoi(str string) int {
 	val, err := strconv.Atoi(str)
 	if err != nil {
-		fmt.Printf("\033[1;31mError converting string to int: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mError converting string to int: %s. Did you forget how to count?\033[0m\n", err)
 		return 0
 	}
 	return val
@@ -241,33 +244,43 @@ func sendResultsToTelegram(resultsFile string) {
 	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
 	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send file to Telegram: %s. You sure the chat ID isn’t a black hole?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Guess what? I’m not surprised.\033[0m\n", err)
+		return
 	}
+
+	fmt.Printf("\033[1;32mResults successfully sent to Telegram. If you actually found something useful, congratulations.\033[0m\n")
 }
 
 func main() {
 	printHeader()
-
 	scanner := bufio.NewScanner(os.Stdin)
 
-	fmt.Print("Enter IP/domain to scan: \n> ")
+	fmt.Print("Enter target to scan (e.g., 192.168.1.1): \n> ")
 	scanner.Scan()
 	target := scanner.Text()
 
-	fmt.Print("Enter scan type (e.g., SYN, UDP): \n> ")
+	fmt.Printf("Using default scan type: \033[1;34m%s\033[0m\n", defaultScanType)
+	fmt.Print("Enter scan type (default is SYN): \n> ")
 	scanner.Scan()
 	scanType := scanner.Text()
+	if scanType == "" {
+		scanType = defaultScanType
+	}
 
-	fmt.Print("Enter additional arguments for the scan: \n> ")
+	fmt.Printf("Using default arguments: \033[1;34m%s\033[0m\n", defaultArgs)
+	fmt.Print("Enter additional arguments for the scan (default is -T4 -A): \n> ")
 	scanner.Scan()
 	args := scanner.Text()
+	if args == "" {
+		args = defaultArgs
+	}
 
-	fmt.Print("Enter scan duration in seconds: \n> ")
+	fmt.Print("Enter scan duration in seconds (default is 30): \n> ")
 	scanner.Scan()
 	durationStr := scanner.Text()
 	duration := atoi(durationStr)
 	if duration == 0 {
-		duration = 30
+		duration = defaultScanDuration
 	}
 
 	fmt.Print("Enter number of concurrent threads (default is 10): \n> ")
