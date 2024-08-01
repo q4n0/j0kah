@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -19,103 +17,9 @@ const (
 	maxConcurrency = 80
 	maxRetries     = 3
 	retryDelay     = 2 * time.Second
-	proxyURL       = "https://www.proxy-list.download/api/v1/get?type=https"
-	outputFile     = "proxy.list"
 	testURL        = "http://www.google.com"
+	outputFile     = "scan_results.txt"
 )
-
-func scrapeProxies(url string) ([]string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get proxies: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
-	var proxies []string
-	for scanner.Scan() {
-		proxy := strings.TrimSpace(scanner.Text())
-		if strings.Contains(proxy, ":") {
-			proxies = append(proxies, proxy)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	return proxies, nil
-}
-
-func saveProxies(filename string, proxies []string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	for _, proxy := range proxies {
-		if _, err := writer.WriteString(proxy + "\n"); err != nil {
-			return fmt.Errorf("error writing to file: %w", err)
-		}
-	}
-
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("error flushing buffer: %w", err)
-	}
-
-	return nil
-}
-
-func checkProxy(proxy string) bool {
-	proxyURL := "http://" + proxy
-	proxyFunc := http.ProxyURL(&url.URL{Scheme: "http", Host: proxyURL})
-	transport := &http.Transport{Proxy: proxyFunc}
-	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
-
-	resp, err := client.Get(testURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to connect using proxy %s: %s\033[0m\n", proxy, err)
-		return false
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("\033[1;31mProxy %s returned status code %d\033[0m\n", proxy, resp.StatusCode)
-		return false
-	}
-
-	return true
-}
-
-func filterWorkingProxies(proxies []string) []string {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var workingProxies []string
-
-	sem := make(chan struct{}, maxConcurrency)
-	for _, proxy := range proxies {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(proxy string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			if checkProxy(proxy) {
-				mu.Lock()
-				workingProxies = append(workingProxies, proxy)
-				mu.Unlock()
-			}
-		}(proxy)
-	}
-
-	wg.Wait()
-	return workingProxies
-}
 
 func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
@@ -145,7 +49,7 @@ func progressIndicator(duration int) {
 	fmt.Printf("\n\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m\n")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
+func performScan(target, scanType, args string, duration int) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -157,9 +61,6 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 	var err error
 	for i := 0; i < maxRetries; i++ {
 		cmd := exec.Command("nmap", append(strings.Split(args, " "), target)...)
-		if len(proxies) > 0 {
-			cmd.Env = append(os.Environ(), "http_proxy=http://"+proxies[0])
-		}
 		output, err = cmd.CombinedOutput()
 
 		if err == nil {
@@ -178,7 +79,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	filteredOutput := filterOutput(string(output))
 
-	mainFile := "scan_results.txt"
+	mainFile := outputFile
 
 	err = saveResults(mainFile, filteredOutput)
 	if err != nil {
@@ -284,30 +185,12 @@ func sendResultsToTelegram(resultsFile string) {
 func main() {
 	printHeader()
 
-	proxies, err := scrapeProxies(proxyURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to scrape proxies: %s\033[0m\n", err)
-		return
-	}
-
-	fmt.Printf("\033[1;33mScraped %d proxies.\033[0m\n", len(proxies))
-
-	workingProxies := filterWorkingProxies(proxies)
-	fmt.Printf("\033[1;33mFound %d working proxies.\033[0m\n", len(workingProxies))
-
-	if err := saveProxies(outputFile, workingProxies); err != nil {
-		fmt.Printf("\033[1;31mFailed to save working proxies: %s\033[0m\n", err)
-		return
-	}
-
-	fmt.Printf("\033[1;33mProxies saved to %s\033[0m\n", outputFile)
-
 	// Example scan settings
 	target := "example.com"
 	scanType := "tcp"
 	args := "-p-"
 
-	fileName, filteredOutput := performScan(target, scanType, args, 60, workingProxies)
+	fileName, filteredOutput := performScan(target, scanType, args, 60)
 	if fileName == "" {
 		fmt.Printf("\033[1;31mScan failed.\033[0m\n")
 		return
