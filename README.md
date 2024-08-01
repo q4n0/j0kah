@@ -1,31 +1,39 @@
-j0kah Recon Tool
+# j0kah Recon Tool
 
 The j0kah Recon Tool is a network scanning utility designed to perform various types of scans with optional proxy support and Telegram integration for reporting results.
-Table of Contents
 
-    Prerequisites
-    Setup
-    Usage
-    Proxy Management
-    Telegram Integration
-    Troubleshooting
+## Table of Contents
 
-Prerequisites
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Proxy Management](#proxy-management)
+- [Telegram Integration](#telegram-integration)
+- [Troubleshooting](#troubleshooting)
+
+## Prerequisites
 
 Before using the j0kah Recon Tool, ensure the following:
 
-    Go Language: Make sure Go is installed. You can download it from golang.org.
-    Nmap: Install Nmap for network scanning. Download it from nmap.org.
-    Telegram Bot Token: Create a Telegram bot and obtain the token from BotFather.
+- **Go Language**: Make sure Go is installed. You can download it from [golang.org](https://golang.org/dl/).
+- **Nmap**: Install Nmap for network scanning. Download it from [nmap.org](https://nmap.org/download.html).
+- **Telegram Bot Token**: Create a Telegram bot and obtain the token from [BotFather](https://core.telegram.org/bots#botfather).
 
-Setup
+## Setup
 
-    Clone the Repository:
+1. **Clone the Repository:**
+
+   ```bash
+   git clone https://github.com/yourusername/j0kah
+   cd j0kah
+
+    Initialize Go Modules:
+
+    Run the following command to initialize the Go module and download dependencies:
 
     bash
 
-git clone https://github.com/yourusername/j0kah
-cd j0kah
+go mod tidy
 
 Build the Project:
 
@@ -37,7 +45,7 @@ go build -o j0kah
 
 Create Configuration File:
 
-Create a config.ini file with the following content:
+Create a config.ini file in the project directory with the following content:
 
 ini
 
@@ -56,7 +64,7 @@ Usage
 
     ./j0kah
 
-    Follow the prompts to:
+    Follow the Prompts to:
         Enter the IP/domain to scan.
         Choose the scan type (e.g., SYN-ACK Scan, UDP Scan).
         Decide whether to fetch and use proxies.
@@ -67,8 +75,7 @@ Proxy Management
 
 To use proxies for scanning:
 
-    Proxies are Integrated: The tool automatically fetches proxies from Proxy List API and saves them to proxy.list if you choose to use them.
-
+    Proxies are Integrated: The tool automatically fetches proxies from the Proxy List API and saves them to proxy.list if you choose to use them.
     Proxy Configuration: If proxies are available, they will be used in the scan. The proxy list is fetched and saved automatically, and the proxy configuration is handled within the tool.
 
 Telegram Integration
@@ -89,3 +96,5 @@ Troubleshooting
     Error: unexpected status code: 404: This indicates an issue with fetching proxies. Ensure the proxy URL is correct and reachable.
     Failed to create file: Check file permissions in the directory where you're trying to save files.
     Telegram errors: Verify the config.ini file for the correct token and chat ID. Ensure the bot has permission to send messages to the chat ID.
+
+If you encounter any issues, feel free to open an issue on the GitHub repository for assistance.
