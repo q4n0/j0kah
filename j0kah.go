@@ -361,7 +361,7 @@ func main() {
 	}
 
 	// Send results to Telegram if configured
-	sendResultsToTelegram(resultsFile)s
+	sendResultsToTelegram(resultsFile)
 
 	printFooter()
 }
