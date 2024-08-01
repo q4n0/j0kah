@@ -85,7 +85,7 @@ func printHeader() {
 	fmt.Println(Blue + Bold + "===================================" + Reset)
 	fmt.Println(Blue + Bold + "    Welcome to j0kah Recon Tool" + Reset)
 	fmt.Println(Blue + Bold + "===================================" + Reset)
-	fmt.Println(Yellow + Bold + "Select the type of scan to perform, or just screw around:" + Reset)
+	fmt.Println(Yellow + Bold + "Select the type of scan to perform:" + Reset)
 	fmt.Println()
 }
 
@@ -103,9 +103,9 @@ func printFooter() {
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf(Green + "Progress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist." + Reset + "\r", i*100/duration)
+		fmt.Printf(Green + "Progress: %d%% Complete. If you’re still here, congratulations on your persistence." + Reset + "\r", i*100/duration)
 	}
-	fmt.Println(Green + "You made it through the wait. Bravo, you’re now a certified saint. Or just really bored." + Reset)
+	fmt.Println(Green + "You’ve made it through the wait. Bravo!" + Reset)
 }
 
 func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
@@ -128,7 +128,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 		if err == nil {
 			break
 		}
-		fmt.Printf(Red + "Scan failed: %s. Retry? Of course, because who doesn't love a good, endless loop?" + Reset + "\n", err)
+		fmt.Printf(Red + "Scan failed: %s. Retrying..." + Reset + "\n", err)
 		time.Sleep(retryDelay)
 	}
 
@@ -199,7 +199,7 @@ func sendResultsToTelegram(resultsFile string) {
 	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
-		fmt.Printf(Red + "Failed to open config file: %s. Maybe try not screwing it up next time?" + Reset + "\n", err)
+		fmt.Printf(Red + "Failed to open config file: %s" + Reset + "\n", err)
 		return
 	}
 	defer file.Close()
@@ -216,26 +216,26 @@ func sendResultsToTelegram(resultsFile string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Printf(Red + "Error reading config file: %s. Was it in the shredder?" + Reset + "\n", err)
+		fmt.Printf(Red + "Error reading config file: %s" + Reset + "\n", err)
 		return
 	}
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf(Red + "Failed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?" + Reset + "\n", err)
+		fmt.Printf(Red + "Failed to create Telegram bot: %s" + Reset + "\n", err)
 		return
 	}
 
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf(Red + "Invalid chat ID: %s. Did you forget how to count?" + Reset + "\n", err)
+		fmt.Printf(Red + "Invalid chat ID: %s" + Reset + "\n", err)
 		return
 	}
 
 	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
 	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf(Red + "Failed to send file to Telegram: %s. You sure the chat ID isn’t a black hole?" + Reset + "\n", err)
+		fmt.Printf(Red + "Failed to send file to Telegram: %s" + Reset + "\n", err)
 	}
 }
 
@@ -244,10 +244,10 @@ func main() {
 	fmt.Println("i. SYN-ACK Scan        - Because poking the bear is fun")
 	fmt.Println("ii. UDP Scan            - Unfiltered and full of chaos")
 	fmt.Println("iii. AnonScan           - Sneaky like a thief in the night")
-	fmt.Println("iv. Regular Scan       - The vanilla flavor for the boring folks")
-	fmt.Println("v. OS Detection        - Guessing what OS they're running, like a pro")
-	fmt.Println("vi. Multiple IP inputs - Because one target is never enough")
-	fmt.Println("vii. Ping Scan         - Hello? Is anybody home?")
+	fmt.Println("iv. Regular Scan        - The vanilla flavor for the boring folks")
+	fmt.Println("v. OS Detection         - Guessing what OS they're running, like a pro")
+	fmt.Println("vi. Multiple IP Inputs  - Because one target is never enough")
+	fmt.Println("vii. Ping Scan          - Hello? Is anybody home?")
 	fmt.Println("viii. Comprehensive Scan - The whole shebang, go big or go home")
 	fmt.Print("> ")
 
@@ -265,7 +265,7 @@ func main() {
 
 	var proxies []string
 	if useProxies == "y" {
-		fmt.Println("Fetching proxies... or not, depending on how the internet feels today.")
+		fmt.Println("Fetching proxies...")
 		proxies, err := scrapeProxies(proxyURL)
 		if err != nil {
 			fmt.Printf(Red + "Failed to fetch proxies: %s" + Reset + "\n", err)
@@ -281,7 +281,7 @@ func main() {
 		fmt.Println("Skipping proxy usage.")
 	}
 
-	fmt.Print("Enter the target URL / IP : ")
+	fmt.Print("Enter the target URL / IP: ")
 	var target string
 	fmt.Scanln(&target)
 
