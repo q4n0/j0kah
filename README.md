@@ -2,15 +2,6 @@
 
 The j0kah Recon Tool is a network scanning utility designed to perform various types of scans with optional proxy support and Telegram integration for reporting results.
 
-## Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Setup](#setup)
-- [Usage](#usage)
-- [Proxy Management](#proxy-management)
-- [Telegram Integration](#telegram-integration)
-- [Troubleshooting](#troubleshooting)
-
 ## Prerequisites
 
 Before using the j0kah Recon Tool, ensure the following:
@@ -24,7 +15,7 @@ Before using the j0kah Recon Tool, ensure the following:
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/j0kah
+   git clone https://github.com/q4n0/j0kah
    cd j0kah
 
     Initialize Go Modules:
