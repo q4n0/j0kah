@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
-	"time"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -74,7 +74,7 @@ func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
 	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;33mSelect the type of scan to perform:\033[0m")
+	fmt.Println("\033[1;33mSelect the type of scan to perform, or just screw around:\033[0m")
 	fmt.Println()
 }
 
@@ -92,9 +92,9 @@ func printFooter() {
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf("\033[1;32mProgress: %d%% Complete. Still here? Good, you're doing great.\033[0m\r", i*100/duration)
+		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m\r", i*100/duration)
 	}
-	fmt.Println("\033[1;32mYou survived the wait. Congrats, you’re officially patient! Did you bring snacks?\033[0m")
+	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
 func performScan(target, scanType, args string, duration int, proxies []string) string {
@@ -117,7 +117,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 		if err == nil {
 			break
 		}
-		fmt.Printf("\033[1;31mScan failed: %s. Retrying...\033[0m\n", err)
+		fmt.Printf("\033[1;31mScan failed: %s. Retry? Of course, because who doesn't love a good, endless loop?\033[0m\n", err)
 		time.Sleep(retryDelay)
 	}
 
@@ -177,7 +177,7 @@ func sendResultsToTelegram(results string) {
 	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to open config file: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to open config file: %s. Maybe try not screwing it up next time?\033[0m\n", err)
 		return
 	}
 	defer file.Close()
@@ -194,30 +194,30 @@ func sendResultsToTelegram(results string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Printf("\033[1;31mError reading config file: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mError reading config file: %s. Was it in the shredder?\033[0m\n", err)
 		return
 	}
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?\033[0m\n", err)
 		return
 	}
 
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mInvalid chat ID: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
 		return
 	}
 
 	if results == "" {
-		results = "No scan results to show."
+		results = "No scan results to show. Maybe try a different hobby?"
 	}
 
 	msg := tgbotapi.NewMessage(chatIDInt, results)
 	_, err = bot.Send(msg)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send message to Telegram: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to send message to Telegram: %s. You sure the chat ID isn’t a black hole?\033[0m\n", err)
 	}
 }
 
@@ -230,16 +230,16 @@ func main() {
 	scanner.Scan()
 	target := scanner.Text()
 
-	fmt.Printf("\nScanning %s...\n", target)
+	fmt.Printf("\nScanning %s... Brace yourself, this is gonna be a wild ride!\n", target)
 	fmt.Print("\nSelect scan type:\n")
-	fmt.Print("  i. SYN-ACK Scan\n")
-	fmt.Print("  ii. UDP Scan\n")
-	fmt.Print("  iii. AnonScan\n")
-	fmt.Print("  iv. Regular Scan\n")
-	fmt.Print("  v. OS Detection\n")
-	fmt.Print("  vi. Multiple IP inputs\n")
-	fmt.Print("  vii. Ping Scan\n")
-	fmt.Print("  viii. Comprehensive Scan\n> ")
+	fmt.Print("  i. SYN-ACK Scan - Because poking the bear is fun\n")
+	fmt.Print("  ii. UDP Scan - Unfiltered and full of chaos\n")
+	fmt.Print("  iii. AnonScan - Sneaky like a thief in the night\n")
+	fmt.Print("  iv. Regular Scan - The vanilla flavor for the boring folks\n")
+	fmt.Print("  v. OS Detection - Guessing what OS they're running, like a pro\n")
+	fmt.Print("  vi. Multiple IP inputs - Because one target is never enough\n")
+	fmt.Print("  vii. Ping Scan - Hello? Is anybody home?\n")
+	fmt.Print("  viii. Comprehensive Scan - The whole shebang, go big or go home\n> ")
 	scanner.Scan()
 	scanType := scanner.Text()
 
@@ -256,60 +256,49 @@ func main() {
 
 	args, ok := scanOptions[scanType]
 	if !ok {
-		fmt.Println("\033[1;31mInvalid scan type.\033[0m")
+		fmt.Println("\033[1;31mInvalid scan type selected. Try again if you’re feeling lucky!\033[0m")
 		return
 	}
 
-	fmt.Print("\nEnter duration in seconds: \n> ")
+	fmt.Print("Enter duration for progress indicator (seconds): \n> ")
 	scanner.Scan()
 	duration := atoi(scanner.Text())
 
-	fmt.Print("\nDo you want to fetch and use proxies? (y/n) \n> ")
+	fmt.Print("Do you want to use proxies? (y/n): \n> ")
 	scanner.Scan()
 	useProxies := strings.ToLower(scanner.Text()) == "y"
 
 	var proxies []string
 	if useProxies {
-		fmt.Println("Fetching proxies...")
-		proxies, err := scrapeProxies(proxyURL)
-		if err != nil {
-			fmt.Printf("\033[1;31mError: %s\033[0m\n", err)
-			return
-		}
-
-		if len(proxies) == 0 {
-			fmt.Println("\033[1;33mNo proxies found.\033[0m")
+		fmt.Println("\033[1;33mFetching proxies... or not, depending on how the internet feels today.\033[0m")
+		proxies, _ = scrapeProxies(proxyURL)
+		if err := saveProxies(outputFile, proxies); err != nil {
+			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
 		} else {
-			fmt.Printf("\033[1;32mFound %d proxies. Saving to %s...\033[0m\n", len(proxies), outputFile)
-			if err := saveProxies(outputFile, proxies); err != nil {
-				fmt.Printf("\033[1;31mError: %s\033[0m\n", err)
-				return
-			}
-			fmt.Printf("\033[1;32mProxies successfully saved to %s\033[0m\n", outputFile)
+			fmt.Printf("\033[1;32mProxies saved to %s. Because anonymity is a thing.\033[0m\n", outputFile)
 		}
 	}
 
-	var results string
-	if scanType == "vi" {
-		fmt.Print("\nEnter additional IPs/domains (comma-separated): \n> ")
-		scanner.Scan()
-		additionalIPs := strings.Split(scanner.Text(), ",")
-		targets := append([]string{target}, additionalIPs...)
-		parallelScan(targets, scanType, args, duration, proxies)
-	} else {
-		results = performScan(target, scanType, args, duration, proxies)
+	fmt.Print("How would you like to handle results? (1. Save to file, 2. Send to Telegram, 3. Both): \n> ")
+	scanner.Scan()
+	resultHandling := scanner.Text()
+
+	fmt.Println("\033[1;33mStarting scan. Hold tight!\033[0m")
+	if strings.Contains(resultHandling, "1") {
+		performScan(target, scanType, args, duration, proxies)
+	}
+	if strings.Contains(resultHandling, "2") {
+		results := performScan(target, scanType, args, duration, proxies)
+		if results != "" {
+			sendResultsToTelegram(results)
+		}
+	}
+	if strings.Contains(resultHandling, "3") {
+		results := performScan(target, scanType, args, duration, proxies)
+		if results != "" {
+			sendResultsToTelegram(results)
+		}
 	}
 
 	printFooter()
-
-	fmt.Print("\nDo you want to send the results to Telegram? (y/n) \n> ")
-	scanner.Scan()
-	sendToTelegram := strings.ToLower(scanner.Text()) == "y"
-
-	if sendToTelegram {
-		if results == "" {
-			results = "No scan results to show."
-		}
-		sendResultsToTelegram(results)
-	}
 }
