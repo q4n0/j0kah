@@ -1,7 +1,9 @@
 j0kah Recon Tool
 
-Welcome to the j0kah Recon Tool! This tool is designed for network reconnaissance and scanning. Follow these instructions to install and use the tool effectively.
-Prerequisites USE RESPONSIBLYI WONT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOU ARE ON YOUR OWN!!!
+Welcome to the j0kah Recon Tool! This tool is designed for network reconnaissance and scanning. Follow these instructions to install and use it effectively.
+
+USE RESPONSIBLY! I WILL NOT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOUR OWN!
+Prerequisites
 
     Go Programming Language:
     Ensure you have Go installed. If not, download and install it from the official Go website.
@@ -108,6 +110,6 @@ chat_id=YOUR_CHAT_ID
 
 Contributing
 
-If you wish to contribute to the project, or any questions or issues, please contact the maintainer at b0urn3@proton.me.
+If you wish to contribute to the project or have any questions or issues, please contact the maintainer at b0urn3@proton.me.
 
-This project is provided as is USE RESPONSIBLYI WONT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YPUR OWN!!! 
+This project is provided as-is. USE RESPONSIBLY! I WILL NOT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOUR OWN!
