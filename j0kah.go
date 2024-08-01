@@ -92,12 +92,12 @@ func printFooter() {
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations—you’re officially a glutton for punishment.\033[0m\r", i*100/duration)
+		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m\r", i*100/duration)
 	}
-	fmt.Println("\033[1;32mYou made it through the wait. Bravo! You’re now a certified saint. Or perhaps just extremely patient.\033[0m")
+	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) string {
+func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -123,34 +123,32 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return ""
+		return "", ""
 	}
 
 	wg.Wait()
 
 	filteredOutput := filterOutput(string(output))
+	unknownPorts := filterUnknownPorts(string(output))
+
+	mainFile := "scan_results.txt"
+	unknownFile := "unknown_ports.txt"
+
+	err = saveResults(mainFile, filteredOutput)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
+	}
+
+	err = saveResults(unknownFile, unknownPorts)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to save unknown ports: %s\033[0m\n", err)
+	}
 
 	fmt.Println("\n\033[1;33mScan Results:\033[0m")
 	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
 	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
 
-	return filteredOutput
-}
-
-func parallelScan(targets []string, scanType, args string, duration int, proxies []string) {
-	var wg sync.WaitGroup
-	semaphore := make(chan struct{}, maxConcurrency)
-
-	for _, target := range targets {
-		semaphore <- struct{}{}
-		wg.Add(1)
-		go func(t string) {
-			defer wg.Done()
-			defer func() { <-semaphore }()
-			performScan(strings.TrimSpace(t), scanType, args, duration, proxies)
-		}(target)
-	}
-	wg.Wait()
+	return mainFile, unknownFile
 }
 
 func filterOutput(output string) string {
@@ -164,6 +162,36 @@ func filterOutput(output string) string {
 	return strings.Join(filteredLines, "\n")
 }
 
+func filterUnknownPorts(output string) string {
+	lines := strings.Split(output, "\n")
+	var unknownPorts []string
+	for _, line := range lines {
+		if !strings.Contains(line, "/tcp") && !strings.Contains(line, "/udp") {
+			unknownPorts = append(unknownPorts, line)
+		}
+	}
+	return strings.Join(unknownPorts, "\n")
+}
+
+func saveResults(filename, content string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	if _, err := writer.WriteString(content); err != nil {
+		return fmt.Errorf("error writing to file: %w", err)
+	}
+
+	if err := writer.Flush(); err != nil {
+		return fmt.Errorf("error flushing buffer: %w", err)
+	}
+
+	return nil
+}
+
 func atoi(str string) int {
 	val, err := strconv.Atoi(str)
 	if err != nil {
@@ -173,7 +201,7 @@ func atoi(str string) int {
 	return val
 }
 
-func sendResultsToTelegram(results string) {
+func sendResultsToTelegram(resultsFile string) {
 	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
@@ -210,14 +238,10 @@ func sendResultsToTelegram(results string) {
 		return
 	}
 
-	if results == "" {
-		results = "No scan results to show. Maybe try a different hobby?"
-	}
-
-	msg := tgbotapi.NewMessage(chatIDInt, results)
-	_, err = bot.Send(msg)
+	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
+	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send message to Telegram: %s. You sure the chat ID isn’t a black hole?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to send file to Telegram: %s. You sure the chat ID isn’t a black hole?\033[0m\n", err)
 	}
 }
 
@@ -234,32 +258,49 @@ func main() {
 	fmt.Print("\nSelect scan type:\n")
 	fmt.Print("  i. SYN-ACK Scan - Because poking the bear is fun\n")
 	fmt.Print("  ii. UDP Scan - Unfiltered and full of chaos\n")
-	fmt.Print("  iii. Version Scan - Because who doesn’t love details?\n")
-	fmt.Print("  iv. OS Detection - Or should we say, ‘Guessing game’?\n")
-	fmt.Print("> ")
-
+	fmt.Print("  iii. AnonScan - Sneaky like a thief in the night\n")
+	fmt.Print("  iv. Regular Scan - The vanilla flavor for the boring folks\n")
+	fmt.Print("  v. OS Detection - Guessing what OS they're running, like a pro\n")
+	fmt.Print("  vi. Multiple IP inputs - Because one target is never enough\n")
+	fmt.Print("  vii. Ping Scan - Hello? Is anybody home?\n")
+	fmt.Print("  viii. Comprehensive Scan - The whole shebang, go big or go home\n> ")
 	scanner.Scan()
-	scanType := strings.TrimSpace(scanner.Text())
+	scanType := scanner.Text()
 
-	fmt.Print("\nEnter additional arguments (or just hit Enter to skip):\n> ")
-	scanner.Scan()
-	args := scanner.Text()
+	scanOptions := map[string]string{
+		"i":    "-sS",
+		"ii":   "-sU",
+		"iii":  "-sS -Pn",
+		"iv":   "-sT",
+		"v":    "-O",
+		"vi":   "-iL",
+		"vii":  "-sn",
+		"viii": "-A",
+	}
 
-	fmt.Print("\nEnter duration for progress indicator (seconds): \n> ")
-	scanner.Scan()
-	duration := atoi(scanner.Text())
-
-	fmt.Println("\nFetching proxies...")
-	proxies, err := scrapeProxies(proxyURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to fetch proxies: %s\033[0m\n", err)
+	args, ok := scanOptions[scanType]
+	if !ok {
+		fmt.Println("\033[1;31mInvalid scan type selected. Try again if you’re feeling lucky!\033[0m")
 		return
 	}
 
-	if err := saveProxies(outputFile, proxies); err != nil {
-		fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
-	} else {
-		fmt.Printf("\033[1;32mProxies saved to %s\033[0m\n", outputFile)
+	fmt.Print("Enter duration for progress indicator (seconds): \n> ")
+	scanner.Scan()
+	duration := atoi(scanner.Text())
+
+	fmt.Print("Do you want to use proxies? (y/n): \n> ")
+	scanner.Scan()
+	useProxies := strings.ToLower(scanner.Text()) == "y"
+
+	var proxies []string
+	if useProxies {
+		fmt.Println("\033[1;33mFetching proxies... or not, depending on how the internet feels today.\033[0m")
+		proxies, _ = scrapeProxies(proxyURL)
+		if err := saveProxies(outputFile, proxies); err != nil {
+			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
+		} else {
+			fmt.Printf("\033[1;32mProxies saved to %s. Because anonymity is a thing.\033[0m\n", outputFile)
+		}
 	}
 
 	fmt.Print("How would you like to handle results? (1. Save to file, 2. Send to Telegram, 3. Both): \n> ")
@@ -268,18 +309,24 @@ func main() {
 
 	fmt.Println("\033[1;33mStarting scan. Hold tight!\033[0m")
 	if strings.Contains(resultHandling, "1") {
-		performScan(target, scanType, args, duration, proxies)
+		mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+		if mainFile != "" {
+			fmt.Printf("\033[1;32mScan results saved to %s and %s.\033[0m\n", mainFile, unknownFile)
+		}
 	}
 	if strings.Contains(resultHandling, "2") {
-		results := performScan(target, scanType, args, duration, proxies)
-		if results != "" {
-			sendResultsToTelegram(results)
+		mainFile, _ := performScan(target, scanType, args, duration, proxies)
+		if mainFile != "" {
+			sendResultsToTelegram(mainFile)
 		}
 	}
 	if strings.Contains(resultHandling, "3") {
-		results := performScan(target, scanType, args, duration, proxies)
-		if results != "" {
-			sendResultsToTelegram(results)
+		mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+		if mainFile != "" {
+			sendResultsToTelegram(mainFile)
+		}
+		if unknownFile != "" {
+			sendResultsToTelegram(unknownFile)
 		}
 	}
 
