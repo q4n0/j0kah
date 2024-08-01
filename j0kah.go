@@ -274,7 +274,7 @@ func main() {
 		fmt.Println("Skipping proxy usage.")
 	}
 
-	fmt.Print("Enter the target URL: ")
+	fmt.Print("Enter the target URL / IP : ")
 	var target string
 	fmt.Scanln(&target)
 
