@@ -1,6 +1,6 @@
 j0kah Recon Tool
 
-Welcome to the j0kah Recon Tool, a versatile network scanning utility with optional proxy support and Telegram integration. Follow the steps below to set up and use the tool effectively.
+The j0kah Recon Tool is a network scanning utility designed to perform various types of scans with optional proxy support and Telegram integration for reporting results.
 Table of Contents
 
     Prerequisites
@@ -12,17 +12,11 @@ Table of Contents
 
 Prerequisites
 
-Before you begin, ensure you have the following:
+Before using the j0kah Recon Tool, ensure the following:
 
-    Go Language: Ensure Go is installed on your system. You can download it from golang.org.
-    Nmap: Install Nmap for network scanning. You can get it from nmap.org.
-    Telegram Bot Token: Create a Telegram bot and get the token from BotFather.
-    Config File: Create a config.ini file with the following structure:
-
-    makefile
-
-    token=YOUR_TELEGRAM_BOT_TOKEN
-    chat_id=YOUR_CHAT_ID
+    Go Language: Make sure Go is installed. You can download it from golang.org.
+    Nmap: Install Nmap for network scanning. Download it from nmap.org.
+    Telegram Bot Token: Create a Telegram bot and obtain the token from BotFather.
 
 Setup
 
@@ -35,85 +29,63 @@ cd j0kah
 
 Build the Project:
 
-Navigate to the project directory and build the Go application:
+Build the Go application:
 
 bash
 
 go build -o j0kah
 
-Create Proxy Scraper:
+Create Configuration File:
 
-Save the proxy scraper script as proxy_scraper.go:
+Create a config.ini file with the following content:
 
-go
+ini
 
-// Paste the proxy scraper code here
+    token=put token here
+    chat_id=put chat id here
 
-Build the proxy scraper:
-
-bash
-
-    go build -o proxy_scraper proxy_scraper.go
+    Replace put token here and put chat id here with your actual Telegram bot token and chat ID.
 
 Usage
 
-    Run the Proxy Scraper:
+    Run j0kah Recon Tool:
 
-    To fetch and save proxies:
+    Execute the tool:
 
     bash
 
-./proxy_scraper
-
-This will save the fetched proxies to proxy.list.
-
-Run j0kah Recon Tool:
-
-Start the tool with:
-
-bash
-
     ./j0kah
 
-    Follow the on-screen prompts to:
-        Enter IP/domain to scan.
-        Choose scan type (e.g., SYN-ACK Scan, UDP Scan).
-        Decide whether to use proxies.
-        Enter proxy settings if applicable.
+    Follow the prompts to:
+        Enter the IP/domain to scan.
+        Choose the scan type (e.g., SYN-ACK Scan, UDP Scan).
+        Decide whether to fetch and use proxies.
         Enter the scan duration and other options.
         Choose how to handle results (save to file, send via Telegram, or both).
 
 Proxy Management
 
-If you wish to use proxies for scanning, ensure:
+To use proxies for scanning:
 
-    Run Proxy Scraper:
+    Proxies are Integrated: The tool automatically fetches proxies from Proxy List API and saves them to proxy.list if you choose to use them.
 
-    Fetch and save the list of proxies:
-
-    bash
-
-    ./proxy_scraper
-
-    Configure Proxies:
-
-    When prompted by j0kah, provide the path to the proxy.list file.
+    Proxy Configuration: If proxies are available, they will be used in the scan. The proxy list is fetched and saved automatically, and the proxy configuration is handled within the tool.
 
 Telegram Integration
 
-To receive scan results on Telegram:
+To receive scan results via Telegram:
 
     Create a Telegram Bot:
-        Use BotFather on Telegram to create a bot and get the token.
+        Use BotFather to create a new bot and obtain the token.
 
-    Configure Bot:
-        Save the bot token and your chat ID in config.ini.
+    Configure the Bot:
+        Save your bot token and chat ID in the config.ini file as described in the Setup section.
 
     Send Results:
-        During tool usage, choose the option to send results to Telegram.
+        During tool usage, choose to send results to Telegram.
 
 Troubleshooting
 
-    Error: unexpected status code: 404: This may indicate an issue with the proxy list URL. Verify the URL and ensure it's correct.
-    Failed to create file: Ensure you have the necessary permissions to create files in the directory.
-    Telegram errors: Check your config.ini file for correct token and chat ID.
+    Error: unexpected status code: 404: This indicates an issue with fetching proxies. Ensure the proxy URL is correct and reachable.
+    Failed to create file: Check file permissions in the directory where you're trying to save files.
+    Telegram errors: Verify the config.ini file for the correct token and chat ID. Ensure the bot has permission to send messages to the chat ID.
