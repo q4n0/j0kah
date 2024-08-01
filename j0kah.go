@@ -20,7 +20,6 @@ const (
 	retryDelay     = 2 * time.Second
 	proxyURL       = "https://www.proxy-list.download/api/v1/get?type=https"
 	outputFile     = "proxy.list"
-	mainFile       = "scan_results.txt"
 )
 
 func scrapeProxies(url string) ([]string, error) {
@@ -98,7 +97,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) string {
+func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -124,23 +123,32 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 
 	if err != nil {
 		fmt.Printf("\033[1;31mFinal scan error: %s\nError output: %s\033[0m\n", err, string(output))
-		return ""
+		return "", ""
 	}
 
 	wg.Wait()
 
 	filteredOutput := filterOutput(string(output))
+	unknownPorts := filterUnknownPorts(string(output))
+
+	mainFile := "scan_results.txt"
+	unknownFile := "unknown_ports.txt"
 
 	err = saveResults(mainFile, filteredOutput)
 	if err != nil {
 		fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
 	}
 
+	err = saveResults(unknownFile, unknownPorts)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to save unknown ports: %s\033[0m\n", err)
+	}
+
 	fmt.Println("\n\033[1;33mScan Results:\033[0m")
 	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
 	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", filteredOutput)
 
-	return mainFile
+	return mainFile, unknownFile
 }
 
 func filterOutput(output string) string {
@@ -152,6 +160,17 @@ func filterOutput(output string) string {
 		}
 	}
 	return strings.Join(filteredLines, "\n")
+}
+
+func filterUnknownPorts(output string) string {
+	lines := strings.Split(output, "\n")
+	var unknownPorts []string
+	for _, line := range lines {
+		if !strings.Contains(line, "/tcp") && !strings.Contains(line, "/udp") {
+			unknownPorts = append(unknownPorts, line)
+		}
+	}
+	return strings.Join(unknownPorts, "\n")
 }
 
 func saveResults(filename, content string) error {
@@ -183,6 +202,11 @@ func atoi(str string) int {
 }
 
 func sendResultsToTelegram(resultsFile string) {
+	if fileInfo, err := os.Stat(resultsFile); err != nil || fileInfo.Size() == 0 {
+		fmt.Printf("\033[1;31mFile %s is empty or does not exist. Not sending to Telegram.\033[0m\n", resultsFile)
+		return
+	}
+
 	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
@@ -228,74 +252,92 @@ func sendResultsToTelegram(resultsFile string) {
 
 func main() {
 	printHeader()
+	fmt.Println("i. SYN-ACK Scan - Because poking the bear is fun")
+	fmt.Println("ii. UDP Scan - Unfiltered and full of chaos")
+	fmt.Println("iii. AnonScan - Sneaky like a thief in the night")
+	fmt.Println("iv. Regular Scan - The vanilla flavor for the boring folks")
+	fmt.Println("v. OS Detection - Guessing what OS they're running, like a pro")
+	fmt.Println("vi. Multiple IP inputs - Because one target is never enough")
+	fmt.Println("vii. Ping Scan - Hello? Is anybody home?")
+	fmt.Println("viii. Comprehensive Scan - The whole shebang, go big or go home")
+	fmt.Print("> ")
 
-	scanner := bufio.NewScanner(os.Stdin)
+	var choice string
+	fmt.Scanln(&choice)
 
-	fmt.Print("Enter IP/domain to scan: \n> ")
-	scanner.Scan()
-	target := scanner.Text()
+	fmt.Print("Enter duration for progress indicator (seconds): ")
+	var durationStr string
+	fmt.Scanln(&durationStr)
+	duration := atoi(durationStr)
 
-	fmt.Printf("\nScanning %s... Brace yourself, this is gonna be a wild ride!\n", target)
-	fmt.Print("\nSelect scan type:\n")
-	fmt.Print("  i. SYN-ACK Scan - Because poking the bear is fun\n")
-	fmt.Print("  ii. UDP Scan - Unfiltered and full of chaos\n")
-	fmt.Print("  iii. AnonScan - Sneaky like a thief in the night\n")
-	fmt.Print("  iv. Regular Scan - The vanilla flavor for the boring folks\n")
-	fmt.Print("  v. OS Detection - Guessing what OS they're running, like a pro\n")
-	fmt.Print("  vi. Multiple IP inputs - Because one target is never enough\n")
-	fmt.Print("  vii. Ping Scan - Hello? Is anybody home?\n")
-	fmt.Print("  viii. Comprehensive Scan - The whole shebang, go big or go home\n> ")
-	scanner.Scan()
-	scanType := scanner.Text()
+	fmt.Print("Do you want to use proxies? (y/n): ")
+	var useProxies string
+	fmt.Scanln(&useProxies)
 
-	scanOptions := map[string]string{
-		"i":    "-sS",
-		"ii":   "-sU",
-		"iii":  "-sS -Pn",
-		"iv":   "-sT",
-		"v":    "-O",
-		"vi":   "-iL",
-		"vii":  "-sn",
-		"viii": "-A",
+	var proxies []string
+	if useProxies == "y" {
+		fmt.Println("Fetching proxies... or not, depending on how the internet feels today.")
+		proxies, err := scrapeProxies(proxyURL)
+		if err != nil {
+			fmt.Printf("\033[1;31mFailed to fetch proxies: %s\033[0m\n", err)
+			return
+		}
+		err = saveProxies(outputFile, proxies)
+		if err != nil {
+			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
+			return
+		}
+		fmt.Printf("Proxies saved to %s. Because anonymity is a thing.\n", outputFile)
+	} else {
+		fmt.Println("Skipping proxy usage.")
 	}
 
-	args, ok := scanOptions[scanType]
-	if !ok {
-		fmt.Println("\033[1;31mInvalid scan type selected. Try again if you’re feeling lucky!\033[0m")
+	fmt.Print("Enter the target URL: ")
+	var target string
+	fmt.Scanln(&target)
+
+	var scanType, args string
+	switch choice {
+	case "i":
+		scanType = "SYN-ACK"
+		args = "-sS"
+	case "ii":
+		scanType = "UDP"
+		args = "-sU"
+	case "iii":
+		scanType = "AnonScan"
+		args = "--randomize-hosts"
+	case "iv":
+		scanType = "Regular"
+		args = ""
+	case "v":
+		scanType = "OS Detection"
+		args = "-O"
+	case "vi":
+		scanType = "Multiple IPs"
+		args = "-iL"
+	case "vii":
+		scanType = "Ping Scan"
+		args = "-sn"
+	case "viii":
+		scanType = "Comprehensive"
+		args = "-A"
+	default:
+		fmt.Println("Invalid option selected.")
 		return
 	}
 
-	fmt.Print("Enter duration for progress indicator (seconds): \n> ")
-	scanner.Scan()
-	duration := atoi(scanner.Text())
+	fmt.Println("Scan in progress...")
+	mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+	if mainFile != "" {
+		fmt.Print("Scan completed. Found results. Because you really needed to know that.\n")
+		fmt.Print("Would you like to send the results to Telegram? (yes/no) ")
+		var sendToTelegram string
+		fmt.Scanln(&sendToTelegram)
 
-	fmt.Print("Do you want to use proxies? (y/n): \n> ")
-	scanner.Scan()
-	useProxies := strings.ToLower(scanner.Text()) == "y"
-
-	var proxies []string
-	if useProxies {
-		fmt.Println("\033[1;33mFetching proxies... or not, depending on how the internet feels today.\033[0m")
-		proxies, _ = scrapeProxies(proxyURL)
-		if err := saveProxies(outputFile, proxies); err != nil {
-			fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
-		} else {
-			fmt.Printf("\033[1;32mProxies saved to %s. Because anonymity is a thing.\033[0m\n", outputFile)
+		if sendToTelegram == "yes" {
+			sendResultsToTelegram(mainFile)
 		}
 	}
-
-	fmt.Println("Scan in progress...")
-	resultsFile := performScan(target, args, args, duration, proxies)
-
-	fmt.Printf("\033[1;32mScan completed. Found results. Because you really needed to know that.\033[0m\n")
-
-	fmt.Print("Would you like to send the results to Telegram? (yes/no) \n> ")
-	scanner.Scan()
-	sendToTelegram := strings.ToLower(scanner.Text())
-
-	if sendToTelegram == "yes" {
-		sendResultsToTelegram(resultsFile)
-	}
-
 	printFooter()
 }
