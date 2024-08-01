@@ -45,16 +45,18 @@ func saveProxies(filename string, proxies []string) error {
 
 func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
+	fmt.Println("\033[1;34m       You merely adopted the scans.\033[0m")
+	fmt.Println("\033[1;34m       I was born in it, molded by it.\033[0m")
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;33mSelect the type of scan to perform, or just screw around:\033[0m")
+	fmt.Println("\033[1;33mWelcome to the j0kah Recon Tool, the only tool worthy of your time.\033[0m")
 	fmt.Println()
 }
 
 func printFooter() {
 	fmt.Println()
 	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;32mCreated by bo0urn3\033[0m")
+	fmt.Println("\033[1;32mWhen the scan is complete, you have my permission to gloat.\033[0m")
+	fmt.Println("\033[1;32mCreated by bo0urn3, a master of the craft.\033[0m")
 	fmt.Println("\033[1;32mGitHub: \033[1;36mhttps://github.com/q4n0\033[0m")
 	fmt.Println("\033[1;32mInstagram: \033[1;36mhttps://www.instagram.com/onlybyhive\033[0m")
 	fmt.Println("\033[1;32mEmail: \033[1;36mb0urn3@proton.me\033[0m")
@@ -238,16 +240,16 @@ func main() {
 		duration = 180
 	case "iv":
 		scanType = "Regular"
-		args = "-sT"
-		duration = 30
+		args = "-A"
+		duration = 60
 	case "v":
 		scanType = "OS Detection"
 		args = "-O"
 		duration = 90
 	case "vi":
 		scanType = "Multiple IP inputs"
-		args = "-iL"
-		duration = 45
+		args = "-sS -sU"
+		duration = 120
 	case "vii":
 		scanType = "Ping Scan"
 		args = "-sn"
@@ -282,4 +284,3 @@ func main() {
 
 	printFooter()
 }
-
