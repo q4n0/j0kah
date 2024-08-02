@@ -82,6 +82,16 @@ func getScanDuration() int {
 	}
 }
 
+func getSaveOption() bool {
+	input := getUserInput("Do you want to save the scan results locally? (yes/no) - Or are you too lazy to bother?")
+	return strings.ToLower(input) == "yes"
+}
+
+func getTelegramOption() bool {
+	input := getUserInput("Do you want to send the scan results to Telegram? (yes/no) - Or would you rather keep it a secret?")
+	return strings.ToLower(input) == "yes"
+}
+
 func performScan(target, scanType, args string, duration, concurrency int) string {
 	fmt.Printf("\033[1;33mPreparing to perform a %s scan on %s with args '%s' and concurrency %d.\033[0m\n", scanType, target, args, concurrency)
 	progressIndicator(duration)
@@ -150,15 +160,21 @@ func main() {
 
 	results := performScan(target, scanType, args, duration, concurrency)
 
-	// Save results to a file for sending
-	resultsFile := "scan_results.txt"
-	err := os.WriteFile(resultsFile, []byte(results), 0644)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save scan results: %s. Maybe try not to mess things up next time?\033[0m\n", err)
-		return
+	saveLocally := getSaveOption()
+	if saveLocally {
+		resultsFile := "scan_results.txt"
+		err := os.WriteFile(resultsFile, []byte(results), 0644)
+		if err != nil {
+			fmt.Printf("\033[1;31mFailed to save scan results: %s. Maybe try not to mess things up next time?\033[0m\n", err)
+			return
+		}
+		fmt.Println("\033[1;32mResults successfully saved locally.\033[0m")
 	}
 
-	sendResultsToTelegram(results)
+	sendToTelegram := getTelegramOption()
+	if sendToTelegram {
+		sendResultsToTelegram(results)
+	}
 
 	printFooter()
 }
