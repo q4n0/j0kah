@@ -198,10 +198,10 @@ func saveResults(filename, content string) error {
 	return nil
 }
 
-func atoi(str string) int {
-	val, err := strconv.Atoi(str)
+func atoi(str string) int64 {
+	val, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mError converting string to int: %s. Did you forget how to count?\033[0m\n", err)
+		fmt.Printf("\033[1;31mError converting string to int64: %s. Did you forget how to count?\033[0m\n", err)
 		return 0
 	}
 	return val
@@ -238,11 +238,11 @@ func sendResultsToTelegram(resultsFile string) {
 		return
 	}
 
-	msg := tgbotapi.NewMessage(atoi(chatID), "Scan results:")
+	chatIDInt64 := atoi(chatID)
+	msg := tgbotapi.NewMessage(chatIDInt64, "Scan results:")
 	_, err = bot.Send(msg)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send Telegram message: %s. Maybe the bot is just shy?\033[0m\n", err)
-		return
+		fmt.Printf("\033[1;31mFailed to send Telegram message: %s. Did you think it would be that easy?\033[0m\n", err)
 	}
 
 	fileContent, err := os.ReadFile(resultsFile)
@@ -251,7 +251,7 @@ func sendResultsToTelegram(resultsFile string) {
 		return
 	}
 
-	msg = tgbotapi.NewMessage(atoi(chatID), string(fileContent))
+	msg = tgbotapi.NewMessage(chatIDInt64, string(fileContent))
 	_, err = bot.Send(msg)
 	if err != nil {
 		fmt.Printf("\033[1;31mFailed to send Telegram message: %s. Did you think it would be that easy?\033[0m\n", err)
