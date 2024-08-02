@@ -13,7 +13,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-
 const (
 	maxConcurrency      = 10
 	maxRetries          = 3
@@ -185,18 +184,37 @@ func sendResultsToTelegram(resultsFile string) {
 
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mError converting chat ID: %s. Is it even a number?\033[0m\n", err)
+		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
 		return
 	}
 
-	fileBytes, err := os.ReadFile(resultsFile)
+	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
+	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf("\033[1;31mError reading results file: %s. Or maybe you just forgot where you put it?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Did the bot get lost?\033[0m\n", err)
 		return
 	}
 
-	message := tgbotapi.NewMessage(chatIDInt, string(fileBytes))
-	if _, err := bot.Send(message); err != nil {
-		fmt.Printf("\033[1;31mFailed to send message to Telegram: %s. Try sending it with a pigeon instead?\033[0m\n", err)
+	fmt.Println("\033[1;32mResults successfully sent to Telegram.\033[0m")
+}
+
+func main() {
+	printHeader()
+
+	// Example scan parameters
+	target := "example.com"
+	scanType := defaultScanType
+	args := defaultArgs
+	duration := defaultScanDuration
+
+	mainFile, unknownFile := performScan(target, scanType, args, duration)
+	if mainFile != "" {
+		fmt.Printf("\033[1;33mScan results saved to: %s\033[0m\n", mainFile)
+		fmt.Printf("\033[1;33mUnknown ports saved to: %s\033[0m\n", unknownFile)
 	}
+
+	// Send results to Telegram
+	sendResultsToTelegram(mainFile)
+
+	printFooter()
 }
