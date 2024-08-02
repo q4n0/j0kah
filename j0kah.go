@@ -160,7 +160,7 @@ func performScan(target, scanType, args string, duration int, proxies []string, 
 func filterOutput(output string) string {
 	lines := strings.Split(output, "\n")
 	var filteredLines []string
-	for _, line := lines {
+	for _, line := range lines {
 		if strings.Contains(line, "/tcp") || strings.Contains(line, "/udp") || strings.Contains(line, "VULNERABILITY") {
 			filteredLines = append(filteredLines, line)
 		}
