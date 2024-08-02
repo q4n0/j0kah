@@ -18,59 +18,11 @@ const (
 	maxConcurrency      = 10
 	maxRetries          = 3
 	retryDelay          = 2 * time.Second
-	outputFile          = "proxy.list" // Update if necessary
+	outputFile          = "proxy.list"
 	defaultScanDuration = 30 // Default duration for scan
 	defaultScanType     = "SYN" // Default scan type
 	defaultArgs         = "-T4 -A"  // Default arguments for scan
 )
-
-func scrapeProxies(url string) ([]string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get proxies: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
-	var proxies []string
-	for scanner.Scan() {
-		proxy := strings.TrimSpace(scanner.Text())
-		if strings.Contains(proxy, ":") {
-			proxies = append(proxies, proxy)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	return proxies, nil
-}
-
-func saveProxies(filename string, proxies []string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	for _, proxy := range proxies {
-		if _, err := writer.WriteString(proxy + "\n"); err != nil {
-			return fmt.Errorf("error writing to file: %w", err)
-		}
-	}
-
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("error flushing buffer: %w", err)
-	}
-
-	return nil
-}
 
 func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
@@ -233,39 +185,18 @@ func sendResultsToTelegram(resultsFile string) {
 
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
+		fmt.Printf("\033[1;31mError converting chat ID: %s. Is it even a number?\033[0m\n", err)
 		return
 	}
 
-	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
-	_, err = bot.Send(fileToSend)
+	fileBytes, err := os.ReadFile(resultsFile)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Did the bot get lost?\033[0m\n", err)
+		fmt.Printf("\033[1;31mError reading results file: %s. Or maybe you just forgot where you put it?\033[0m\n", err)
 		return
 	}
 
-	fmt.Println("\033[1;32mResults successfully sent to Telegram.\033[0m")
-}
-
-func main() {
-	printHeader()
-
-	// Example scan parameters
-	target := "example.com"
-	scanType := defaultScanType
-	args := defaultArgs
-	duration := defaultScanDuration
-
-	mainFile, unknownFile := performScan(target, scanType, args, duration)
-	if mainFile != "" {
-		fmt.Printf("\033[1;33mScan results saved to: %s\033[0m\n", mainFile)
-		fmt.Printf("\033[1;33mUnknown ports saved to: %s\033[0m\n", unknownFile)
+	message := tgbotapi.NewMessage(chatIDInt, string(fileBytes))
+	if _, err := bot.Send(message); err != nil {
+		fmt.Printf("\033[1;31mFailed to send message to Telegram: %s. Try sending it with a pigeon instead?\033[0m\n", err)
 	}
-
-	// Send results to Telegram
-	if mainFile != "" {
-		sendResultsToTelegram(mainFile)
-	}
-
-	printFooter()
 }
