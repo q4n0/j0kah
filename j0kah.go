@@ -19,21 +19,23 @@ const (
 )
 
 func printHeader() {
-	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
-	fmt.Println("\033[1;34m===================================\033[0m")
-	fmt.Println("\033[1;33mSelect the type of scan to perform, or just screw around:\033[0m")
+	fmt.Println("\033[1;31m===================================\033[0m")
+	fmt.Println("\033[1;31m       Welcome to the Realm of j0kah\033[0m")
+	fmt.Println("\033[1;31m     You Are Now Under the Command of\033[0m")
+	fmt.Println("\033[1;31m             B0URN3 - The Vigilante\033[0m")
+	fmt.Println("\033[1;31m===================================\033[0m")
+	fmt.Println("\033[1;33mChoose your path wisely. The darkness awaits...\033[0m")
 	fmt.Println()
 }
 
 func printFooter() {
 	fmt.Println()
-	fmt.Println("\033[1;34m===================================\033[0m")
+	fmt.Println("\033[1;31m===================================\033[0m")
 	fmt.Println("\033[1;32mCreated by bo0urn3\033[0m")
 	fmt.Println("\033[1;32mGitHub: \033[1;36mhttps://github.com/q4n0\033[0m")
 	fmt.Println("\033[1;32mInstagram: \033[1;36mhttps://www.instagram.com/onlybyhive\033[0m")
 	fmt.Println("\033[1;32mEmail: \033[1;36mb0urn3@proton.me\033[0m")
-	fmt.Println("\033[1;34m===================================\033[0m")
+	fmt.Println("\033[1;31m===================================\033[0m")
 	fmt.Println()
 }
 
