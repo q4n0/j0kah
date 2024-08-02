@@ -250,3 +250,38 @@ func sendResultsToTelegram(resultsFile string) {
 
 	fmt.Println("\033[1;32mResults successfully sent to Telegram.\033[0m")
 }
+
+func main() {
+	printHeader()
+
+	// Scrape proxies
+	proxies, err := scrapeProxies(proxyURL)
+	if err != nil {
+		fmt.Printf("\033[1;31m%s\033[0m\n", err)
+		return
+	}
+
+	// Save proxies to file
+	err = saveProxies(outputFile, proxies)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
+		return
+	}
+
+	// Example scan parameters
+	target := "example.com"
+	scanType := defaultScanType
+	args := defaultArgs
+	duration := defaultScanDuration
+
+	mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+	if mainFile != "" {
+		fmt.Printf("\033[1;33mScan results saved to: %s\033[0m\n", mainFile)
+		fmt.Printf("\033[1;33mUnknown ports saved to: %s\033[0m\n", unknownFile)
+	}
+
+	// Send results to Telegram
+	sendResultsToTelegram(mainFile)
+
+	printFooter()
+}
