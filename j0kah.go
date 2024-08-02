@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	defaultScanDuration = 30 // Default duration for scan
+	defaultScanDuration = 30  // Default duration for scan
 	defaultScanType     = "SYN" // Default scan type
-	defaultArgs         = "-T4 -A"  // Default arguments for scan
+	defaultArgs         = "-T4 -A" // Default arguments for scan
 	telegramTokenFile   = "config.ini" // File containing Telegram bot token and chat ID
 )
 
@@ -82,12 +82,12 @@ func getScanDuration() int {
 	}
 }
 
-func performScan(target, scanType, args string, duration int) string {
-	fmt.Printf("\033[1;33mPreparing to perform a %s scan on %s with args '%s'.\033[0m\n", scanType, target, args)
+func performScan(target, scanType, args string, duration, concurrency int) string {
+	fmt.Printf("\033[1;33mPreparing to perform a %s scan on %s with args '%s' and concurrency %d.\033[0m\n", scanType, target, args, concurrency)
 	progressIndicator(duration)
 
 	// Simulate scan result
-	result := fmt.Sprintf("Simulated scan result for target: %s\nScan Type: %s\nDuration: %d seconds\nArgs: %s\n", target, scanType, duration, args)
+	result := fmt.Sprintf("Simulated scan result for target: %s\nScan Type: %s\nDuration: %d seconds\nArgs: %s\nConcurrency: %d\n", target, scanType, duration, args, concurrency)
 	fmt.Printf("\033[1;32mScan complete! Here are the results:\033[0m\n%s\n", result)
 
 	return result
@@ -148,7 +148,7 @@ func main() {
 	duration := getScanDuration()
 	concurrency := getConcurrency()
 
-	results := performScan(target, scanType, args, duration)
+	results := performScan(target, scanType, args, duration, concurrency)
 
 	// Save results to a file for sending
 	resultsFile := "scan_results.txt"
