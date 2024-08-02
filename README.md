@@ -1,113 +1,93 @@
-j0kah Recon Tool
+j0kah
 
-Welcome to the j0kah Recon Tool! This tool is designed for network reconnaissance and scanning. Follow these instructions to install and use it effectively.
+j0kah is a powerful network scanning tool designed for both performance and style. With features like customizable scan types, adjustable concurrency, and integration with Telegram for notifications, j0kah brings a touch of chaos to network discovery.
+Features
 
-USE RESPONSIBLY! I WILL NOT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOUR OWN!
-Prerequisites
-
-    Go Programming Language:
-    Ensure you have Go installed. If not, download and install it from the official Go website.
-
-    Git:
-    You need Git to clone the repository. Install it from the official Git website.
+    Customizable Scans: Choose from various scan types including SYN, UDP, TCP, ACK, and more.
+    Adjustable Concurrency: Set the number of concurrent threads for your scan.
+    Configurable Scan Duration: Define how long the scan should run.
+    Local File Saving: Optionally save scan results to a local file.
+    Telegram Integration: Send scan results to a Telegram chat for remote notification.
+    Styled Output: Enjoy a touch of humor and style with colorful and provocative output.
 
 Installation
 
-    Clone the Repository:
+To use j0kah, follow these steps:
 
-    Clone the repository to your local machine:
+    Clone the Repository:
 
     bash
 
 git clone https://github.com/q4n0/j0kah.git
-
 cd j0kah
 
-    Install Go Modules, Install the required Go modules by running:
+Install Dependencies:
+
+Ensure you have Go installed on your system. Install the required Go packages:
+
+bash
 
 go mod tidy
 
-    Build the Project, Build the executable from the source code:
+You also need nmap installed on your system, as j0kah relies on it for performing network scans.
 
-go build -o j0kah
+Create and Configure the Telegram Bot:
 
-    Verify the Installation:
+    Create a Telegram bot using BotFather and get the bot token.
 
-    Ensure the executable was built successfully. You should see a file named j0kah in your directory:
+    Get the chat ID for the chat where you want to receive scan results.
 
+    Create a config.ini file in the project directory with the following content:
 
+    makefile
 
-ls -l j0kah
+        token=YOUR_TELEGRAM_BOT_TOKEN
+        chat_id=YOUR_TELEGRAM_CHAT_ID
 
-    Usage
+Usage
 
-    To run the j0kah Recon Tool, use the following command:
-    For Linux use:
+    Run the Tool:
 
-sudo ./j0kah  
+    bash
 
+    go run j0kah.go
 
-Upon running the tool, you'll be prompted to:
+    Follow the Prompts:
+        Enter the comma-separated list of targets.
+        Choose the scan type.
+        Set the concurrency level.
+        Define the scan duration.
+        Decide if you want to save results locally.
+        Choose if you want to send results to Telegram.
+        Provide any additional arguments for the scan.
 
-    Enter IP/Domain to Scan:
-    Provide the target IP address or domain you want to scan.
+    View Results:
+        If you chose to save results locally, they will be saved in scan_results.txt.
+        If you opted for Telegram notifications, you’ll receive the scan results in your specified chat.
 
-    Select Scan Type:
-    Choose from the following scan types:
-        i: SYN-ACK Scan
-        ii: UDP Scan
-        iii: AnonScan
-        iv: Regular Scan
-        v: OS Detection
-        vi: Multiple IP inputs
-        vii: Ping Scan
-        viii: Comprehensive Scan
+Example Output
 
-    Enter Duration for Progress Indicator:
-    Specify how long (in seconds) the progress indicator should run.
+vbnet
 
-    Use Proxies:
-    Decide whether to use proxies. If yes, proxies will be fetched and saved to proxy.list.
+=========================================================================
+       Welcome to the Insanity Show, Where Chaos Reigns Supreme,
+       And you're the Star of the Act
+           b0urn3 - The Mad Genius
+=========================================================================
+Ready to dance with madness? Let the games begin.
 
-    Handle Results:
-    Choose how to handle the results:
-        1: Save to file
-        2: Send to Telegram
-        3: Both save to file and send to Telegram
+Preparing to perform a SYN scan on target1,target2 with args '-T4 -A' and concurrency 10.
+Progress: 10% Complete. If you’re still here, you must enjoy torment. Either that or you’ve mastered the art of waiting. 
+...
+Wow, you survived! Now go ahead and reward yourself for this grueling achievement. Or just admit you have nothing better to do.
 
-Example
+Scan complete! Results will be sent to Telegram or saved locally based on your choice.
 
+Results have been delivered to Telegram. Brace yourself—because you just invited chaos into your chat.
 
-
-sudo ./j0kah
-
-    Enter IP/domain: 192.168.1.1
-    Select scan type: ii (UDP Scan)
-    Enter duration: 30
-    Use proxies: y
-    Handle results: 3 (Both)
-
-Proxies
-
-If you choose to use proxies, the tool will fetch them from this API and save them to proxy.list.
-Sending Results to Telegram
-
-To send results to Telegram, ensure you have a config.ini file with the following format:
-
-makefile
-
-token=YOUR_TELEGRAM_BOT_TOKEN
-chat_id=YOUR_CHAT_ID
-Where as youll change the BOT TOKEN with yours and CHAT ID for your bot read here for that: 
-
-TO GET TOKEN READ:
-https://medium.com/geekculture/generate-telegram-token-for-bot-api-d26faf9bf064
-
-To get TELEGRAM CHAT ID READ:
-https://medium.com/@cyri113/telegram-bot-getting-a-chat-id-5a365229c6ec
-
-Contributing
-
-If you wish to contribute to the project or have any questions or issues, please contact the maintainer at b0urn3@proton.me.
-
-This project is provided as-is. USE RESPONSIBLY! I WILL NOT BE RESPONSIBLE FOR ANY DAMAGES THAT MAY OCCUR! YOU ARE ON YOUR OWN!
+=================================================================
+Created by b0urn3
+GitHub: https://github.com/q4n0
+Instagram: https://www.instagram.com/onlybyhive
+Email: b0urn3@proton.me
+=================================================================
