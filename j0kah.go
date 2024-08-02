@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -17,7 +16,6 @@ const (
 	maxConcurrency      = 10
 	maxRetries          = 3
 	retryDelay          = 2 * time.Second
-	outputFile          = "proxy.list"
 	defaultScanDuration = 30 // Default duration for scan
 	defaultScanType     = "SYN" // Default scan type
 	defaultArgs         = "-T4 -A"  // Default arguments for scan
@@ -51,13 +49,6 @@ func progressIndicator(duration int) {
 }
 
 func performScan(target, scanType, args string, duration int) (string, string) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		progressIndicator(duration)
-	}()
-
 	var output []byte
 	var err error
 	for i := 0; i < maxRetries; i++ {
@@ -76,7 +67,7 @@ func performScan(target, scanType, args string, duration int) (string, string) {
 		return "", ""
 	}
 
-	wg.Wait()
+	progressIndicator(duration)
 
 	filteredOutput := filterOutput(string(output))
 	unknownPorts := filterUnknownPorts(string(output))
@@ -201,12 +192,56 @@ func sendResultsToTelegram(resultsFile string) {
 func main() {
 	printHeader()
 
-	// Example scan parameters
-	target := "example.com"
-	scanType := defaultScanType
-	args := defaultArgs
-	duration := defaultScanDuration
+	// Prompt for scan parameters
+	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Print("\033[1;33mAlright, you brave soul. Enter the target (e.g., example.com) or face my wrath: \033[0m")
+	target, _ := reader.ReadString('\n')
+	target = strings.TrimSpace(target)
+
+	fmt.Print("\033[1;33mSelect your scan type (e.g., SYN). Choose wisely, or prepare for chaos: \033[0m")
+	scanType, _ := reader.ReadString('\n')
+	scanType = strings.TrimSpace(scanType)
+
+	fmt.Print("\033[1;33mHow long should we endure this pain? Enter scan duration in seconds (default 30): \033[0m")
+	durationStr, _ := reader.ReadString('\n')
+	durationStr = strings.TrimSpace(durationStr)
+	duration := defaultScanDuration
+	if durationStr != "" {
+		duration = atoi(durationStr)
+	}
+
+	fmt.Print("\033[1;33mAdditional scan arguments (default '-T4 -A'). Make it spicy: \033[0m")
+	args, _ := reader.ReadString('\n')
+	args = strings.TrimSpace(args)
+	if args == "" {
+		args = defaultArgs
+	}
+
+	fmt.Print("\033[1;33mHow many warriors should we send into the fray? Enter concurrency level (default 10): \033[0m")
+	concurrencyStr, _ := reader.ReadString('\n')
+	concurrencyStr = strings.TrimSpace(concurrencyStr)
+	if concurrencyStr == "" {
+		concurrencyStr = strconv.Itoa(maxConcurrency)
+	}
+	maxConcurrency = atoi(concurrencyStr)
+
+	fmt.Print("\033[1;33mRetries, retries, and more retries! Enter number of retries (default 3): \033[0m")
+	retriesStr, _ := reader.ReadString('\n')
+	retriesStr = strings.TrimSpace(retriesStr)
+	if retriesStr == "" {
+		retriesStr = strconv.Itoa(maxRetries)
+	}
+	maxRetries = atoi(retriesStr)
+
+	fmt.Print("\033[1;33mHow long should we wait before another try? Enter retry delay in seconds (default 2): \033[0m")
+	retryDelayStr, _ := reader.ReadString('\n')
+	retryDelayStr = strings.TrimSpace(retryDelayStr)
+	if retryDelayStr != "" {
+		retryDelay = time.Duration(atoi(retryDelayStr)) * time.Second
+	}
+
+	// Perform the scan
 	mainFile, unknownFile := performScan(target, scanType, args, duration)
 	if mainFile != "" {
 		fmt.Printf("\033[1;33mScan results saved to: %s\033[0m\n", mainFile)
