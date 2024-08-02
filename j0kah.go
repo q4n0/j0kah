@@ -20,9 +20,9 @@ const (
 	retryDelay          = 2 * time.Second
 	proxyURL            = "https://www.proxy-list.download/api/v1/get?type=https"
 	outputFile          = "proxy.list"
-	defaultScanDuration = 30
-	defaultScanType     = "SYN"
-	defaultArgs         = "-T4 -A"
+	defaultScanDuration = 30 // Default duration for scan
+	defaultScanType     = "SYN" // Default scan type
+	defaultArgs         = "-T4 -A"  // Default arguments for scan
 )
 
 func scrapeProxies(url string) ([]string, error) {
@@ -111,9 +111,7 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 	var output []byte
 	var err error
 	for i := 0; i < maxRetries; i++ {
-		cmdArgs := strings.Split(args, " ")
-		cmdArgs = append(cmdArgs, target)
-		cmd := exec.Command("nmap", cmdArgs...)
+		cmd := exec.Command("nmap", append(strings.Split(args, " "), target)...)
 		if len(proxies) > 0 {
 			cmd.Env = append(os.Environ(), "http_proxy=http://"+proxies[0])
 		}
@@ -207,7 +205,7 @@ func atoi(str string) int {
 }
 
 func sendResultsToTelegram(resultsFile string) {
-	configFile := "config.ini"
+	configFile := "config.ini" // Update with actual path
 	file, err := os.Open(configFile)
 	if err != nil {
 		fmt.Printf("\033[1;31mFailed to open config file: %s. Maybe try not screwing it up next time?\033[0m\n", err)
@@ -246,30 +244,9 @@ func sendResultsToTelegram(resultsFile string) {
 	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, resultsFile)
 	_, err = bot.Send(fileToSend)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Maybe try again later?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Did the bot get lost?\033[0m\n", err)
 		return
 	}
 
 	fmt.Println("\033[1;32mResults successfully sent to Telegram.\033[0m")
-}
-
-func main() {
-	printHeader()
-
-	proxies, err := scrapeProxies(proxyURL)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to scrape proxies: %s\033[0m\n", err)
-	}
-
-	target := "scan_target"
-	scanType := defaultScanType
-	args := defaultArgs
-	duration := defaultScanDuration
-
-	resultsFile, unknownFile := performScan(target, scanType, args, duration, proxies)
-	if resultsFile != "" {
-		sendResultsToTelegram(resultsFile)
-	}
-
-	printFooter()
 }
