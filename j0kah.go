@@ -18,8 +18,7 @@ const (
 	maxConcurrency      = 10
 	maxRetries          = 3
 	retryDelay          = 2 * time.Second
-	proxyURL            = "https://www.proxy-list.download/api/v1/get?type=https"
-	outputFile          = "proxy.list"
+	outputFile          = "proxy.list" // Update if necessary
 	defaultScanDuration = 30 // Default duration for scan
 	defaultScanType     = "SYN" // Default scan type
 	defaultArgs         = "-T4 -A"  // Default arguments for scan
@@ -100,7 +99,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-func performScan(target, scanType, args string, duration int, proxies []string) (string, string) {
+func performScan(target, scanType, args string, duration int) (string, string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -112,9 +111,6 @@ func performScan(target, scanType, args string, duration int, proxies []string) 
 	var err error
 	for i := 0; i < maxRetries; i++ {
 		cmd := exec.Command("nmap", append(strings.Split(args, " "), target)...)
-		if len(proxies) > 0 {
-			cmd.Env = append(os.Environ(), "http_proxy=http://"+proxies[0])
-		}
 		output, err = cmd.CombinedOutput()
 
 		if err == nil {
@@ -254,34 +250,22 @@ func sendResultsToTelegram(resultsFile string) {
 func main() {
 	printHeader()
 
-	// Scrape proxies
-	proxies, err := scrapeProxies(proxyURL)
-	if err != nil {
-		fmt.Printf("\033[1;31m%s\033[0m\n", err)
-		return
-	}
-
-	// Save proxies to file
-	err = saveProxies(outputFile, proxies)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save proxies: %s\033[0m\n", err)
-		return
-	}
-
 	// Example scan parameters
 	target := "example.com"
 	scanType := defaultScanType
 	args := defaultArgs
 	duration := defaultScanDuration
 
-	mainFile, unknownFile := performScan(target, scanType, args, duration, proxies)
+	mainFile, unknownFile := performScan(target, scanType, args, duration)
 	if mainFile != "" {
 		fmt.Printf("\033[1;33mScan results saved to: %s\033[0m\n", mainFile)
 		fmt.Printf("\033[1;33mUnknown ports saved to: %s\033[0m\n", unknownFile)
 	}
 
 	// Send results to Telegram
-	sendResultsToTelegram(mainFile)
+	if mainFile != "" {
+		sendResultsToTelegram(mainFile)
+	}
 
 	printFooter()
 }
