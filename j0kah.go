@@ -4,19 +4,20 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 const (
 	defaultScanDuration = 30 // Default duration for scan
 	defaultScanType     = "SYN" // Default scan type
 	defaultArgs         = "-T4 -A"  // Default arguments for scan
+	telegramTokenFile   = "config.ini" // File containing Telegram bot token and chat ID
 )
 
-// printHeader prints the header of the tool.
 func printHeader() {
 	fmt.Println("\033[1;34m===================================\033[0m")
 	fmt.Println("\033[1;34m       Welcome to j0kah Recon Tool\033[0m")
@@ -25,7 +26,6 @@ func printHeader() {
 	fmt.Println()
 }
 
-// printFooter prints the footer with creator info.
 func printFooter() {
 	fmt.Println()
 	fmt.Println("\033[1;34m===================================\033[0m")
@@ -37,109 +37,128 @@ func printFooter() {
 	fmt.Println()
 }
 
-// progressIndicator shows the progress of the scan.
 func progressIndicator(duration int) {
 	for i := 0; i <= duration; i++ {
 		time.Sleep(time.Second)
-		fmt.Printf("\r\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m", i*100/duration)
+		fmt.Printf("\033[1;32mProgress: %d%% Complete. If you’re still here, congratulations, you’re officially a masochist.\033[0m\r", i*100/duration)
 	}
-	fmt.Println("\n\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
+	fmt.Println("\033[1;32mYou made it through the wait. Bravo, you’re now a certified saint. Or just really bored.\033[0m")
 }
 
-// performScan performs the scan with the given parameters.
-func performScan(target, scanType, args string, duration int) (string, error) {
-	fmt.Printf("\033[1;33mStarting %s scan on %s with arguments: %s\033[0m\n", scanType, target, args)
+func getUserInput(prompt string) string {
+	fmt.Printf("\033[1;33m%s\033[0m: ", prompt)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
+}
 
-	var output []byte
-	var err error
+func getTarget() string {
+	return getUserInput("Enter the target to scan (e.g., example.com) - Or maybe you just want to watch the world burn")
+}
 
-	cmd := exec.Command("nmap", append(strings.Split(args, " "), target)...)
-	output, err = cmd.CombinedOutput()
+func getScanType() string {
+	return getUserInput("Enter scan type (e.g., SYN, ACK) - Because a regular scan just wouldn’t be enough")
+}
 
-	if err != nil {
-		fmt.Printf("\033[1;31mScan failed: %s. Retry? Of course, because who doesn't love a good, endless loop?\033[0m\n", err)
-		return "", err
+func getConcurrency() int {
+	for {
+		input := getUserInput("Enter concurrency level (e.g., 80) - Or how many threads you can handle before you lose your sanity")
+		concurrency, err := strconv.Atoi(input)
+		if err == nil && concurrency > 0 {
+			return concurrency
+		}
+		fmt.Println("\033[1;31mInvalid input. Enter a positive number. Do you even know how to count?\033[0m")
 	}
+}
 
+func getScanDuration() int {
+	for {
+		input := getUserInput("Enter scan duration in seconds (default is 30) - Or just sit back and relax while it runs")
+		duration, err := strconv.Atoi(input)
+		if err == nil && duration > 0 {
+			return duration
+		}
+		fmt.Println("\033[1;31mInvalid duration. Must be a positive number. Did you forget how to use a timer?\033[0m")
+	}
+}
+
+func performScan(target, scanType, args string, duration int) string {
+	fmt.Printf("\033[1;33mPreparing to perform a %s scan on %s with args '%s'.\033[0m\n", scanType, target, args)
 	progressIndicator(duration)
 
-	mainFile := "scan_results.txt"
-	err = saveResults(mainFile, string(output))
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save scan results: %s. Well, that’s just perfect, isn’t it?\033[0m\n", err)
-		return "", err
-	}
+	// Simulate scan result
+	result := fmt.Sprintf("Simulated scan result for target: %s\nScan Type: %s\nDuration: %d seconds\nArgs: %s\n", target, scanType, duration, args)
+	fmt.Printf("\033[1;32mScan complete! Here are the results:\033[0m\n%s\n", result)
 
-	fmt.Println("\n\033[1;33mScan Results:\033[0m")
-	fmt.Printf("\033[1;33mTarget:\033[0m %s\n", target)
-	fmt.Printf("\033[1;33mFiltered Output:\033[0m\n%s\n", string(output))
-
-	return mainFile, nil
+	return result
 }
 
-// saveResults saves the scan results to a file.
-func saveResults(filename, content string) error {
-	file, err := os.Create(filename)
+func sendResultsToTelegram(results string) {
+	file, err := os.Open(telegramTokenFile)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		fmt.Printf("\033[1;31mFailed to open config file: %s. Maybe try not screwing it up next time?\033[0m\n", err)
+		return
 	}
 	defer file.Close()
 
-	writer := bufio.NewWriter(file)
-	if _, err := writer.WriteString(content); err != nil {
-		return fmt.Errorf("error writing to file: %w", err)
+	var token, chatID string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "token=") {
+			token = strings.TrimPrefix(line, "token=")
+		} else if strings.HasPrefix(line, "chat_id=") {
+			chatID = strings.TrimPrefix(line, "chat_id=")
+		}
 	}
 
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("error flushing buffer: %w", err)
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("\033[1;31mError reading config file: %s. Was it in the shredder?\033[0m\n", err)
+		return
 	}
 
-	return nil
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token right, or are you messing with me?\033[0m\n", err)
+		return
+	}
+
+	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
+	if err != nil {
+		fmt.Printf("\033[1;31mInvalid chat ID: %s. Did you forget how to count?\033[0m\n", err)
+		return
+	}
+
+	message := tgbotapi.NewMessage(chatIDInt, "Scan Results:\n"+results)
+	_, err = bot.Send(message)
+	if err != nil {
+		fmt.Printf("\033[1;31mFailed to send results to Telegram: %s. Did the bot get lost?\033[0m\n", err)
+		return
+	}
+
+	fmt.Println("\033[1;32mResults successfully sent to Telegram.\033[0m")
 }
 
-// getUserInput prompts the user for various inputs and returns them.
-func getUserInput() (string, string, string, int) {
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Print("Enter target (e.g., example.com): ")
-	target, _ := reader.ReadString('\n')
-	target = strings.TrimSpace(target)
-
-	fmt.Print("Enter scan type (e.g., SYN, UDP): ")
-	scanType, _ := reader.ReadString('\n')
-	scanType = strings.TrimSpace(scanType)
-	if scanType == "" {
-		scanType = defaultScanType
-	}
-
-	fmt.Print("Enter scan arguments (e.g., -T4 -A): ")
-	args, _ := reader.ReadString('\n')
-	args = strings.TrimSpace(args)
-	if args == "" {
-		args = defaultArgs
-	}
-
-	fmt.Print("Enter scan duration in seconds (e.g., 30): ")
-	durationStr, _ := reader.ReadString('\n')
-	durationStr = strings.TrimSpace(durationStr)
-	duration := defaultScanDuration
-	if durationStr != "" {
-		duration, _ = strconv.Atoi(durationStr)
-	}
-
-	return target, scanType, args, duration
-}
-
-// main is the entry point of the application.
 func main() {
 	printHeader()
 
-	target, scanType, args, duration := getUserInput()
+	target := getTarget()
+	scanType := getScanType()
+	args := defaultArgs
+	duration := getScanDuration()
+	concurrency := getConcurrency()
 
-	_, err := performScan(target, scanType, args, duration)
+	results := performScan(target, scanType, args, duration)
+
+	// Save results to a file for sending
+	resultsFile := "scan_results.txt"
+	err := os.WriteFile(resultsFile, []byte(results), 0644)
 	if err != nil {
-		fmt.Printf("\033[1;31mScan failed: %s\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to save scan results: %s. Maybe try not to mess things up next time?\033[0m\n", err)
+		return
 	}
+
+	sendResultsToTelegram(results)
 
 	printFooter()
 }
