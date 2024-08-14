@@ -50,7 +50,7 @@ func progressIndicator(duration int) {
 	fmt.Println("\033[1;32mWow, you survived! Now go ahead and reward yourself for this grueling achievement. Or just admit you have nothing better to do. \033[0m")
 }
 
-func getUserInput(prompt string, defaultValue string) string {
+func getUserInput(prompt, defaultValue string) string {
 	fmt.Printf("\033[1;33m%s (default: %s)\033[0m: ", prompt, defaultValue)
 	var input string
 	fmt.Scanln(&input)
@@ -61,42 +61,42 @@ func getUserInput(prompt string, defaultValue string) string {
 }
 
 func getTargets() string {
-	return getUserInput("Enter comma-separated list of targets (default: target1,target2) - Or just put a single target", defaultTargets)
+	return getUserInput("Enter comma-separated list of targets (default: target1,target2)", defaultTargets)
 }
 
 func getScanType() string {
-	return getUserInput("Enter scan type (SYN/UDP/TCP/ACK/Xmas/Null/FIN/Window/Maimon) - Or stick with the default SYN", defaultScanType)
+	return getUserInput("Enter scan type (SYN/UDP/TCP/ACK/Xmas/Null/FIN/Window/Maimon)", defaultScanType)
 }
 
 func getConcurrency() int {
 	for {
-		input := getUserInput("Enter concurrency level (default: 10) - Or how many threads you can handle before you lose your sanity", "10")
+		input := getUserInput("Enter concurrency level (default: 10)", "10")
 		concurrency, err := strconv.Atoi(input)
 		if err == nil && concurrency > 0 {
 			return concurrency
 		}
-		fmt.Println("\033[1;31mInvalid input. Enter a positive number. Do you even know how to count?\033[0m")
+		fmt.Println("\033[1;31mInvalid input. Enter a positive number.\033[0m")
 	}
 }
 
 func getScanDuration() int {
 	for {
-		input := getUserInput("Enter scan duration in seconds (default: 30) - Or just sit back and relax while it runs", strconv.Itoa(defaultScanDuration))
+		input := getUserInput("Enter scan duration in seconds (default: 30)", strconv.Itoa(defaultScanDuration))
 		duration, err := strconv.Atoi(input)
 		if err == nil && duration > 0 {
 			return duration
 		}
-		fmt.Println("\033[1;31mInvalid duration. Must be a positive number. Did you forget how to use a timer?\033[0m")
+		fmt.Println("\033[1;31mInvalid duration. Must be a positive number.\033[0m")
 	}
 }
 
 func getSaveOption() bool {
-	input := getUserInput("Do you want to save the scan results locally? (y/n) - Or are you too lazy to bother?", "n")
+	input := getUserInput("Do you want to save the scan results locally? (y/n)", "n")
 	return strings.ToLower(input) == "y"
 }
 
 func getTelegramOption() bool {
-	input := getUserInput("Do you want to send the scan results to Telegram? (y/n) - Or would you rather keep it a secret?", "n")
+	input := getUserInput("Do you want to send the scan results to Telegram? (y/n)", "n")
 	return strings.ToLower(input) == "y"
 }
 
@@ -111,42 +111,36 @@ func performScan(targets, scanType, args string, duration, concurrency int) stri
 	cmd := exec.Command("nmap", args, "-p-", targets)
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to execute scan: %s. Check your command and targets.\033[0m\n", err)
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("\033[1;31mFailed to execute scan: %s\033[0m\n", err)
 		return ""
 	}
 
-	scanResults := parseScanResults(out.String())
-
-	fmt.Printf("\033[1;32mScan complete! Results will be sent to Telegram or saved locally based on your choice.\033[0m\n")
-
-	return scanResults
+	return parseScanResults(out.String())
 }
 
 func parseScanResults(output string) string {
-	var result string
+	var result strings.Builder
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
-		if strings.Contains(line, "open") {
+		if strings.Contains(line, "open") || strings.Contains(line, "closed") {
 			parts := strings.Fields(line)
 			port := parts[0]
 			service := strings.Join(parts[1:], " ")
-			result += fmt.Sprintf("  - Port %s (tcp): open (Service: %s)\n", port, service)
-		} else if strings.Contains(line, "closed") {
-			parts := strings.Fields(line)
-			port := parts[0]
-			service := strings.Join(parts[1:], " ")
-			result += fmt.Sprintf("  - Port %s (tcp): closed (Service: %s)\n", port, service)
+			status := "open"
+			if strings.Contains(line, "closed") {
+				status = "closed"
+			}
+			result.WriteString(fmt.Sprintf("  - Port %s (tcp): %s (Service: %s)\n", port, status, service))
 		}
 	}
-	return result
+	return result.String()
 }
 
 func sendResultsToTelegram(results string) {
 	file, err := os.Open(telegramTokenFile)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to open config file: %s. Maybe try not screwing it up next time?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to open config file: %s\033[0m\n", err)
 		return
 	}
 	defer file.Close()
@@ -163,76 +157,68 @@ func sendResultsToTelegram(results string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Printf("\033[1;31mError reading config file: %s. Was it in the shredder?\033[0m\n", err)
+		fmt.Printf("\033[1;31mError reading config file: %s\033[0m\n", err)
 		return
 	}
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s. Did you enter the token right, or are you fudging with me?\033[0m\n", err)
+		fmt.Printf("\033[1;31mFailed to create Telegram bot: %s\033[0m\n", err)
 		return
 	}
 	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
 	if err != nil {
-		fmt.Printf("\033[1;31mInvalid chat ID: %s. Seriously? Did you just pull that out of a rat's arse?\033[0m\n", err)
+		fmt.Printf("\033[1;31mInvalid chat ID: %s\033[0m\n", err)
 		return
 	}
 
-	// Send the "Mail's here!" message to Telegram
 	mailMessage := tgbotapi.NewMessage(chatIDInt, "Hellooo stranger! Your mail's here! You wanted chaos? You got it now have fun!")
-	_, err = bot.Send(mailMessage)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send 'Mail's here!' message to Telegram: %s. Did the pigeons get lost?\033[0m\n", err)
+	if _, err := bot.Send(mailMessage); err != nil {
+		fmt.Printf("\033[1;31mFailed to send 'Mail's here!' message to Telegram: %s\033[0m\n", err)
 		return
 	}
 
-	// Now save the results to a file and send the file to Telegram
 	fileName := "scan_results.txt"
-	err = os.WriteFile(fileName, []byte(results), 0644)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save scan results to file: %s. Did you forget to write it?\033[0m\n", err)
+	if err := os.WriteFile(fileName, []byte(results), 0644); err != nil {
+		fmt.Printf("\033[1;31mFailed to save scan results to file: %s\033[0m\n", err)
 		return
 	}
 
-	// Send the results file to Telegram
 	fileToSend := tgbotapi.NewDocumentUpload(chatIDInt, fileName)
-	_, err = bot.Send(fileToSend)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to send results file to Telegram: %s. Did you lose the file in the void?\033[0m\n", err)
+	if _, err := bot.Send(fileToSend); err != nil {
+		fmt.Printf("\033[1;31mFailed to send scan results to Telegram: %s\033[0m\n", err)
 		return
 	}
 
-	fmt.Println("\033[1;32mResults have been delivered to Telegram. Brace yourself—because you just invited chaos into your chat.\033[0m")
-}
-
-func saveResultsLocally(results string) {
-	fileName := getUserInput("Enter file name to save results (default: scan_results.txt)", "scan_results.txt")
-	err := os.WriteFile(fileName, []byte(results), 0644)
-	if err != nil {
-		fmt.Printf("\033[1;31mFailed to save results to file: %s. You probably messed something up. \033[0m\n", err)
-		return
-	}
-	fmt.Printf("\033[1;32mResults saved to file: %s\033[0m\n", fileName)
+	fmt.Println("\033[1;32mScan results have been sent to Telegram.\033[0m")
 }
 
 func main() {
 	printHeader()
 
-	// Collect scan parameters from the user
 	targets := getTargets()
 	scanType := getScanType()
-	args := getArgs()
-	duration := getScanDuration()
 	concurrency := getConcurrency()
+	duration := getScanDuration()
+	saveResults := getSaveOption()
+	telegramOption := getTelegramOption()
+	args := getArgs()
 
-	// Perform the scan
 	results := performScan(targets, scanType, args, duration, concurrency)
 
-	// Check if the user wants to send results to Telegram
-	if getTelegramOption() {
-		sendResultsToTelegram(results)
-	} else if getSaveOption() {
-		saveResultsLocally(results)
+	if results != "" {
+		if saveResults {
+			err := os.WriteFile("scan_results.txt", []byte(results), 0644)
+			if err != nil {
+				fmt.Printf("\033[1;31mFailed to save scan results: %s\033[0m\n", err)
+			} else {
+				fmt.Println("\033[1;32mScan results have been saved locally.\033[0m")
+			}
+		}
+
+		if telegramOption {
+			sendResultsToTelegram(results)
+		}
 	}
 
 	printFooter()
