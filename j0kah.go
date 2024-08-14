@@ -7,6 +7,7 @@ import (
     "os"
     "os/exec"
     "sync"
+    "time" // Importing time package
 )
 
 // Enhanced error handling for performing the scan
@@ -128,6 +129,31 @@ func logEvent(message string) {
 func integrateWithOtherTools(results string) {
     // Implement integration logic with other tools or platforms
     // For example, send results to an external API or tool
+}
+
+// Function to get the scan type from user input
+func getScanType() string {
+    fmt.Println("\033[1;33mSelect scan type:\033[0m")
+    fmt.Println("1. SYN Scan")
+    fmt.Println("2. UDP Scan")
+    fmt.Println("3. TCP Scan")
+    fmt.Println("4. ACK Scan")
+    fmt.Println("5. Xmas Scan")
+    fmt.Println("6. Null Scan")
+    fmt.Println("7. FIN Scan")
+    fmt.Println("8. Window Scan")
+    fmt.Println("9. Maimon Scan")
+    fmt.Print("\033[1;33mEnter your choice (default: 1):\033[0m ")
+
+    var choice int
+    _, err := fmt.Scanln(&choice)
+    if err != nil || choice < 1 || choice > 9 {
+        fmt.Printf("\033[1;31mInvalid input. Defaulting to SYN Scan.\033[0m\n")
+        return "SYN"
+    }
+
+    scanTypes := []string{"SYN", "UDP", "TCP", "ACK", "Xmas", "Null", "FIN", "Window", "Maimon"}
+    return scanTypes[choice-1]
 }
 
 func main() {
